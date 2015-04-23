@@ -4,16 +4,22 @@ ONE_CONTROL = ""
 
 assign = require "object-assign"
 
+id = (v) -> v
 
+class Base
+  set: (prop, val) =>
+    Object.defineProperty @, prop, {emumerable: true, value: val}
+    @
 
 class Experiment
-  constructor: (@name, init) ->
+
+  constructor: (name, init) ->
     self = this
 
     unless self instanceof Experiment
       return new Experiment name, init
 
-    if typeof @name isnt "string"
+    if typeof name isnt "string"
       throw new TypeError MUST_BE_STR
 
     if init? and not typeof init is "function"
@@ -22,55 +28,51 @@ class Experiment
     @_candidates = []
     @_metadata = {}
     @_results = {}
-    @_clean = ->
+    @_clean = id
+    @_name = name
     @_runs = []
 
     init?.call? @
 
-    @Trial = class Trial
-
-    @Control = class Control extends Trial
-
-    @Candidate = class Candidate extends Trial
-
   try: (fn) =>
+    if @_control then throw new Error "Control function already established."
     @_control = fn
-    return this
+    @
 
   use: (fn) =>
     @_candidates.push fn
-    return this
+    @
 
   metadata: (obj) =>
     return @_metadata unless obj?
     assign @_metadata, obj
-    return this
+    @
 
   context: (obj) =>
     return @_context unless obj?
     @_context = obj
-    return this
+    @
 
   clean: (fn) =>
     return @_results.map @_clean unless fn
     @_clean = fn
-    return this
+    @
 
   run: (args...) =>
     unless @_control
       throw new Error "Can't run without a control function."
 
     control = new Control this, @_control, @_context, args
-    control.call()
+    ret = control.call()
 
     candidates = @_candidates.map (fn, i) =>
       run = new Candidate this, fn, @_context, args
       run.call()
-      run
+      run.clean(@_clean)
 
     @_runs.push {control, candidates}
 
-    control.result()
+    ret
 
 
 
@@ -89,17 +91,18 @@ class Trial
 
   result: => @_result
 
-
+  clean: (fn) =>
+    @_result = fn @_result
+    @
 
 class Control extends Trial
-  constructor: (experiment, fn, context, args) ->
+  constructor: (@_experiment, fn, context, args) ->
     super(fn, context, args)
-
-
 
 class Candidate extends Trial
-  cosntructor: (experiment, fn, context, args) ->
+  cosntructor: (@_experiment, fn, context, args) ->
     super(fn, context, args)
+    @_name = @_experiment.name
 
 
 
