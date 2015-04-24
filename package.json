@@ -8,7 +8,8 @@
   },
   "scripts": {
     "test": "mocha --compilers coffee:coffee-script/register ./test/*.coffee -R spec",
-    "prepublish": "coffee -cb -o lib src"
+    "build": "coffee -cb -o lib src",
+    "prepublish": "npm run build"
   },
   "author": "Nick Bottomley (github.com/nickb1080)",
   "license": "MIT",
@@ -19,7 +20,6 @@
     "sentence": "^1.3.0"
   },
   "dependencies": {
-    "object-assign": "^2.0.0",
-    "sentence": "^1.3.0"
+    "object-assign": "^2.0.0"
   }
 }
