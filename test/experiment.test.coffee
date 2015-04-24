@@ -93,6 +93,7 @@ describe "Experiment", ->
 
 
   describe "#metadata", ->
+
     describe "set signature", ->
       it "returns self", ->
         exp = new Experiment ""
@@ -100,26 +101,33 @@ describe "Experiment", ->
         expect(exp) to equal result
 
     describe "get signature", ->
-      it "works"
+      it "returns instance metadata", ->
+        exp = new Experiment ""
+        expect(exp._metadata) to equal exp.metadata()
 
   describe "#context", ->
+
     describe "set signature", ->
       it "returns self", ->
         exp = new Experiment ""
-        result = exp.context {}
-        expect(exp) to equal result
+        ret = exp.context {}
+        expect(exp) to equal ret
 
     describe "get signature", ->
-      it "works"
+      it "returns instance context", ->
+        exp = new Experiment ""
+        ctx = exp.context()
+        expect(exp._context) to equal ctx
 
   describe "#clean", ->
+
     describe "set signature", ->
       it "returns self", ->
         exp = new Experiment ""
         result = exp.clean {}
         expect(exp) to equal result
 
-    describe "get signature", ->
+    xdescribe "get signature", ->
       it "works"
 
   describe "#run", ->
