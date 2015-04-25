@@ -1,4 +1,4 @@
-{AsyncObservation} = require "./"
+AsyncObservation = require "./async-observation"
 
 class AsyncControl extends AsyncObservation
   constructor: (@_experiment, fn, context, args) ->

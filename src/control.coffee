@@ -1,4 +1,4 @@
-{Observation} = require "./"
+Observation = require "./observation"
 
 class Control extends Observation
   constructor: (@_experiment, fn, context, args) ->

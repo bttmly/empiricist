@@ -31,11 +31,10 @@ describe "Experiment", ->
       instance = new Experiment "", -> ctx = @
       expect(instance) to equal ctx
 
-    it "expected methods are available", ->
-      new Experiment "", ->
-        [@use, @try]
-          .forEach (method) ->
-            expect(method) to be a Function
+    describe "instance configuration with initialization function", ->
+
+      it "setting a Result class works"
+      
 
 
   describe "#try", ->

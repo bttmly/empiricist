@@ -1,6 +1,4 @@
-{Observation} = require "./"
-
-console.log "typeof Observation", typeof Observation
+Observation = require "./observation"
 
 class Control extends Observation
   constructor: (@_experiment, fn, context, args) ->

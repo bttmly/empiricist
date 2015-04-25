@@ -2,7 +2,9 @@
 
 assign = require "object-assign"
 
-{Control, Candidate} = require "./"
+Control = require "./control"
+Candidate = require "./candidate"
+Result = require "./result"
 
 MUST_BE_FN = ""
 MUST_BE_STR = ""
@@ -26,6 +28,7 @@ class Experiment
     @_clean = id
     @_name = name
     @_runs = []
+    @Result = Result
 
     init?.call? @
 
@@ -63,11 +66,14 @@ class Experiment
     candidates = @_candidates.map (fn, i) =>
       run = new Candidate @, fn, @_context, args
       run.call()
-      run.clean(@_clean)
+      run
 
-    @_runs.push {control, candidates}
+    @_results.push new @Result control, candidates
 
     ret
+
+  runSpread: (arr) =>
+    @run.apply @, arr
 
 
 module.exports = Experiment

@@ -1,6 +1,6 @@
-{Observation} = require "./"
+Observation = require "./observation"
 
-class AsyncObservation
+class AsyncObservation extends Observation
   constructor: -> super
   
   call: (next) =>
