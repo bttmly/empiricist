@@ -24,13 +24,15 @@ class Experiment
 
     @_candidates = []
     @_metadata = {}
-    @_results = {}
+    @_results = []
     @_clean = id
     @_name = name
     @_runs = []
     @Result = Result
 
     init?.call? @
+
+  results: => @_results
 
   use: (fn) =>
     if @_control then throw new Error "Control function already established."

@@ -6,15 +6,15 @@ class Observation
 
   call: =>
     @_start = Date.now()
-    @_result = @_fn.apply @_context, @_args
+    @_results = @_fn.apply @_context, @_args
     @_end = Date.now()
     @_duration = @_start - @_end
     @_result
 
-  result: => @_result
+  results: => @_results
 
   clean: (fn) =>
-    @_result = fn @_result
+    @_results = fn @_results
     @
 
 module.exports = Observation
