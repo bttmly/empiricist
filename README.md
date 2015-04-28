@@ -8,6 +8,8 @@
 ```
 
 `Observation`
+
+```
 {
   returned: Any
   duration: Number
@@ -16,6 +18,7 @@
   args: Array
   cbArgs: Array?
 }
+```
 
 (`cbArgs` only present for asyncExperiment observations)
 
@@ -23,5 +26,6 @@
 
 TODO:
 
-- beforeRun (copy res??)
+- beforeRun
 - try/catch/err reporting
+- docs
