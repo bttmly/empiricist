@@ -1,17 +1,42 @@
 require("babel/register");
 
 var expect = require("chai").expect;
+var sinon = require("sinon");
 
 var experiment = require("../src/experiment");
 
-describe("experiment 'factory'", function () {
+describe("experiment 'factory'", () => {
 
-  it("takes a `name` string as it's first argument", function () {
+  it("takes a `name` string as it's first argument", () => {
     expect(() => experiment()).to.throw(/argument must be a string/i);
   });
 
-  it("takes an `init` function as it's second argument", function () {
+  it("takes an `init` function as it's second argument", () => {
     expect(() => experiment("")).to.throw(/argument must be a function/i)
+  });
+
+  it("returns a function", () => {
+    expect(typeof experiment("", () => 0)).to.equal("function");
+  });
+
+  describe("init function invocation", () => {
+
+    it("the `this` context of the call and the argument passed to init are the same", () => {
+      var spy = sinon.spy(function (e) {
+        expect(this).to.equal(e);
+      });
+
+      var ctx = {};
+      var arg = {};
+
+      experiment("test", function (e) {
+        ctx = this;
+        arg = e;
+      });
+
+      expect(arg).to.equal(ctx);
+    });
+
   });
 
 });
