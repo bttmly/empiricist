@@ -41,7 +41,7 @@ function experimentContext (params) {
       }
       params.enabled = fn;
       return _experiment;
-    }
+    },
 
     report: function (fn) {
       params.reporter = fn;

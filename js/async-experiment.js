@@ -1,16 +1,21 @@
 var experimentContext = require("./exp-ctx");
 
-function asyncExperiment (name, fn) {
+function asyncExperiment (name, init) {
 
   var params = {};
 
   var _experiment = experimentContext(params);
 
-  fn.call(_experiment, _experiment);
+  // in init function, allow access to experiment object either under this or as argument
+  // @try @use might be nicer in CoffeeScript, fluent e.use().try() chaining probably better for JS
+  init.call(_experiment, _experiment);
 
   return function (...args) {
 
+    // does babel not support (...args, cb) ?? why?
     var finish = args.pop();
+
+    // if no context is provided, fallback to whatever `this` is present
     var ctx = params.context || this;
 
     // early return with no trial recording if no candidate or candidate not enabled
@@ -24,6 +29,8 @@ function asyncExperiment (name, fn) {
       var start = Date.now();
       var observation = {name, args, metadata: params.metadata};
 
+      // usually async functions don't return usable values, but not always
+      // (for example, return an object with callback indicating obj is properly initialized)
       observation.returned = fn.apply(context, args.concat(next))
 
       function next (...cbArgs) {
@@ -31,7 +38,7 @@ function asyncExperiment (name, fn) {
         observation.duration = Date.now() - start;
         trial[options.which] = observation;
 
-        // signal to callback this is the control
+        // signal to callback this is the control result by calling with arguments
         if (options.which == "control") return cb(...cbArgs);
 
         // otherwise call back with no arguments
@@ -41,8 +48,7 @@ function asyncExperiment (name, fn) {
       return observation.returned;
     }
 
-    // called after control and candidate; once called twice,
-    // reports out the trial result and invokes the original callback
+    // coordinates when to call the final `finish` 
     var done = (function () {
       var count = 2, // 1 control, 1 candidate
           controlArgs;

@@ -20,14 +20,13 @@ var exp = asyncExperiment("basic-example", function (e) {
     }, 1000);
   });
 
-  e.report(function (trial) {
-    console.log(trial);
-  });
+  e.report(console.log);
 
 });
+
+console.log("Running async example...");
 
 exp(1, 2, 3, 4, function (err, result) {
   assert.equal(err, null);
   assert.equal(result, 24);
-  console.log("Done!");
 });

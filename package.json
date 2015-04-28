@@ -9,7 +9,8 @@
   "scripts": {
     "test": "mocha --compilers coffee:coffee-script/register ./test/*.coffee -R spec",
     "build": "coffee -cb -o lib src",
-    "prepublish": "npm run build"
+    "prepublish": "npm run build",
+    "examples": "babel-node ./example/async/async-example.js; babel-node ./example/basic/basic-example.js; "
   },
   "author": "Nick Bottomley (github.com/nickb1080)",
   "license": "MIT",

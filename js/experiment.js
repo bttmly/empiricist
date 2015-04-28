@@ -23,7 +23,7 @@ function experiment (name, fn) {
 
     var ctx = params.context || this;
 
-    // early return with no trial recording if no candidate
+    // early return with no trial recording if no candidate or candidate not enabled
     if (!_experiment.enabled()) {
       return params.control.apply(ctx, args);
     }
@@ -33,7 +33,7 @@ function experiment (name, fn) {
       candidate: makeObservation(params.candidate, ctx, args)
     };
 
-    params.reporter(params.clean(trial));
+    params.reporter(params.cleaner(trial));
 
     return trial.control.result;
   };
