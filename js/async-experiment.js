@@ -50,7 +50,9 @@ function asyncExperiment (name, fn) {
   fn.call(_experiment, _experiment);
 
 
-  return function (...args, cb) {
+  return function (...args) {
+
+    var cb = args.pop();
 
     if (typeof candidate !== "function") {
       return control.apply(context, args.concat(cb));
@@ -62,7 +64,9 @@ function asyncExperiment (name, fn) {
       var start = Date.now();
       var observation = {args, metadata, name};
 
-      fn.apply(context, args.concat(function (...cbArgs) {      
+      fn.apply(context, args.concat(next))
+      
+      function next (...cbArgs) {      
         observation.result = cbArgs;
         observation.duration = Date.now() - start;
         trial[options.which] = observation;
@@ -72,7 +76,7 @@ function asyncExperiment (name, fn) {
         
         // otherwise call back with no arguments
         cb();
-      });
+      }
     }
 
     // called after control and candidate; once called twice,
