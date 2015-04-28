@@ -18,3 +18,10 @@
 }
 
 (`cbArgs` only present for asyncExperiment observations)
+
+
+
+TODO:
+
+- beforeRun (copy res??)
+- try/catch/err reporting
