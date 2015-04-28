@@ -1,79 +1,38 @@
-function noop () {}
-
-function id (x) { return x; }
-
-function alwaysTrue () { return true; }
+var experimentContext = require("./exp-ctx");
 
 function asyncExperiment (name, fn) {
-  
-  var control,
-      candidate,
-      context,
-      results = [],
-      metadata = {},
-      cleaner = id,
-      reporter = noop,
-      enabled = alwaysTrue
 
-  var _experiment = {
-    use: function (fn) {
-      control = fn;
-      return _experiment;
-    },
+  var params = {};
 
-    try: function (fn) {
-      candidate = fn;
-      return _experiment;
-    },
-
-    metadata: function (obj) {
-      assign(metadata, obj);
-      return _experiment;
-    },
-
-    context: function (ctx) {
-      context = ctx;
-      return _experiment;
-    },
-
-    report: function (fn) {
-      reporter = fn;
-      return _experiment;
-    },
-
-    clean: function (fn) {
-      cleaner = fn;
-      return _experiment;
-    }
-  };
+  var _experiment = experimentContext(params);
 
   fn.call(_experiment, _experiment);
 
-
   return function (...args) {
 
-    var cb = args.pop();
+    var finish = args.pop();
+    var ctx = params.context || this;
 
-    if (typeof candidate !== "function") {
-      return control.apply(context, args.concat(cb));
+    if (typeof params.candidate !== "function") {
+      return params.control.apply(ctx, args.concat(cb));
     }
 
     var trial = {};
 
     function makeObservation (fn, context, args, options, cb) {
       var start = Date.now();
-      var observation = {args, metadata, name};
+      var observation = {name, args, metadata: params.metadata};
 
       fn.apply(context, args.concat(next))
-      
-      function next (...cbArgs) {      
+
+      function next (...cbArgs) {
         observation.result = cbArgs;
         observation.duration = Date.now() - start;
         trial[options.which] = observation;
 
         // signal to callback this is the control
         if (options.which == "control") return cb(...cbArgs);
-        
+
         // otherwise call back with no arguments
         cb();
       }
@@ -89,19 +48,19 @@ function asyncExperiment (name, fn) {
         if (args.length) {
           controlArgs = args;
         }
-        
+
         count -= 1;
 
-        if (count === 0) {
-          reporter(cleaner(trial));
-          cb(...controlArgs);
-        }
+        if (count) return;
+
+        params.reporter(params.cleaner(trial));
+        finish(...controlArgs);
       };
     })();
 
-    makeObservation(control, context, args, {which: "control"}, done);
-    makeObservation(control, context, args, {which: "candidate"}, done);
+    makeObservation(params.control, ctx, args, {which: "control"}, done);
+    makeObservation(params.candidate, ctx, args, {which: "candidate"}, done);
   };
 }
 
-module.exports = experiment;
+module.exports = asyncExperiment;
