@@ -1,8 +1,8 @@
-function id (x) {
-  return x;
-}
-
 function noop () {}
+
+function id (x) { return x; }
+
+function alwaysTrue () { return true; }
 
 function experiment (name, fn) {
   
@@ -12,7 +12,8 @@ function experiment (name, fn) {
       results = [],
       metadata = {},
       cleaner = id,
-      reporter = noop
+      reporter = noop,
+      enabled = alwaysTrue
 
   var _experiment = {
     use: function (fn) {
@@ -73,7 +74,7 @@ function experiment (name, fn) {
     reporter(clean(trial));
 
     return trial.control.result;
-  }
+  };
 }
 
 module.exports = experiment;
