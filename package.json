@@ -1,5 +1,5 @@
 {
-  "name": "posteriori",
+  "name": "empiricist",
   "version": "0.0.0",
   "description": "experiments",
   "main": "lib/index.js",
@@ -14,6 +14,7 @@
   "author": "Nick Bottomley (github.com/nickb1080)",
   "license": "MIT",
   "devDependencies": {
+    "babel": "^5.1.13",
     "chai": "^2.2.0",
     "coffee-script": "^1.9.2",
     "mocha": "^2.2.4",

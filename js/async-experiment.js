@@ -53,7 +53,7 @@ function asyncExperiment (name, fn) {
   return function (...args, cb) {
 
     if (typeof candidate !== "function") {
-      return control.apply(context, args.concat[cb]);
+      return control.apply(context, args.concat(cb));
     }
 
     var trial = {};
@@ -62,28 +62,36 @@ function asyncExperiment (name, fn) {
       var start = Date.now();
       var observation = {args, metadata, name};
 
-      fn.apply(context, args.concat[next]);
-
-      function next (...cbArgs) {      
-        observation.result = fn.apply(context, args);
+      fn.apply(context, args.concat(function (...cbArgs) {      
+        observation.result = cbArgs;
         observation.duration = Date.now() - start;
         trial[options.which] = observation;
-        if (options.which == "control") return cb(...cbArgs);
-        cb();
-      }
 
+        // signal to callback this is the control
+        if (options.which == "control") return cb(...cbArgs);
+        
+        // otherwise call back with no arguments
+        cb();
+      });
     }
 
+    // called after control and candidate; once called twice,
+    // reports out the trial result and invokes the original callback
     var done = (function () {
       var count = 2, // 1 control, 1 candidate
           controlArgs;
 
       return function (...args) {
-        if (args.length) controlArgs = args;
+        if (args.length) {
+          controlArgs = args;
+        }
         
-        count--;
+        count -= 1;
 
-        if (count == 0) cb(...controlArgs);
+        if (count === 0) {
+          reporter(cleaner(trial));
+          cb(...controlArgs);
+        }
       };
     })();
 
