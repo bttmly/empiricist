@@ -11,7 +11,7 @@ function experiment (name, fn) {
   function makeObservation (fn, context, args) {
     var start = Date.now();
     var observation = {name, args, metadata: params.metadata};
-    observation.result = fn.apply(context, args);
+    observation.returned = fn.apply(context, args);
     observation.duration = Date.now() - start;
     return observation;
   }
@@ -23,7 +23,8 @@ function experiment (name, fn) {
 
     var ctx = params.context || this;
 
-    if (typeof params.candidate !== "function") {
+    // early return with no trial recording if no candidate
+    if (!_experiment.enabled()) {
       return params.control.apply(ctx, args);
     }
 

@@ -13,8 +13,9 @@ function asyncExperiment (name, fn) {
     var finish = args.pop();
     var ctx = params.context || this;
 
-    if (typeof params.candidate !== "function") {
-      return params.control.apply(ctx, args.concat(cb));
+    // early return with no trial recording if no candidate or candidate not enabled
+    if (!_experiment.enabled()) {
+      return params.control.apply(ctx, args.concat(finish));
     }
 
     var trial = {};
@@ -23,10 +24,10 @@ function asyncExperiment (name, fn) {
       var start = Date.now();
       var observation = {name, args, metadata: params.metadata};
 
-      fn.apply(context, args.concat(next))
+      observation.returned = fn.apply(context, args.concat(next))
 
       function next (...cbArgs) {
-        observation.result = cbArgs;
+        observation.cbArgs = cbArgs;
         observation.duration = Date.now() - start;
         trial[options.which] = observation;
 
@@ -36,6 +37,8 @@ function asyncExperiment (name, fn) {
         // otherwise call back with no arguments
         cb();
       }
+
+      return observation.returned;
     }
 
     // called after control and candidate; once called twice,
@@ -58,8 +61,8 @@ function asyncExperiment (name, fn) {
       };
     })();
 
-    makeObservation(params.control, ctx, args, {which: "control"}, done);
     makeObservation(params.candidate, ctx, args, {which: "candidate"}, done);
+    return makeObservation(params.control, ctx, args, {which: "control"}, done);
   };
 }
 

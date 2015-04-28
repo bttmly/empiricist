@@ -4,9 +4,9 @@ function id (x) { return x; }
 
 function alwaysTrue () { return true; }
 
-function experimentContext (props) {
+function experimentContext (params) {
 
-  Object.assign(props, {
+  Object.assign(params, {
     results: [],
     metadata: {},
     cleaner: id,
@@ -16,32 +16,40 @@ function experimentContext (props) {
 
   var _experiment = {
     use: function (fn) {
-      props.control = fn;
+      params.control = fn;
       return _experiment;
     },
 
     try: function (fn) {
-      props.candidate = fn;
+      params.candidate = fn;
       return _experiment;
     },
 
     metadata: function (obj) {
-      assign(props.metadata, obj);
+      assign(params.metadata, obj);
       return _experiment;
     },
 
     context: function (ctx) {
-      props.context = ctx;
+      params.context = ctx;
       return _experiment;
     },
 
+    enabled: function (fn) {
+      if (fn == null) {
+        return typeof params.candidate === "function" && params.enabled();
+      }
+      params.enabled = fn;
+      return _experiment;
+    }
+
     report: function (fn) {
-      props.reporter = fn;
+      params.reporter = fn;
       return _experiment;
     },
 
     clean: function (fn) {
-      props.cleaner = fn;
+      params.cleaner = fn;
       return _experiment;
     }
   };
