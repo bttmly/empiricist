@@ -7,7 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "mocha --compilers coffee:coffee-script/register ./test/*.coffee -R spec",
+    "test": "mocha --compilers js:babel/register ./test/*.js -R spec",
     "build": "babel src --out-dir lib",
     "prepublish": "npm run build",
     "examples": "babel-node ./example/async/async-example.js; babel-node ./example/basic/basic-example.js; "
@@ -17,9 +17,7 @@
   "devDependencies": {
     "babel": "^5.1.13",
     "chai": "^2.2.0",
-    "coffee-script": "^1.9.2",
-    "mocha": "^2.2.4",
-    "sentence": "^1.3.0"
+    "mocha": "^2.2.4"
   },
   "dependencies": {
     "object-assign": "^2.0.0"

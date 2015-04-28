@@ -1,12 +1,17 @@
+var assert = require("assert");
+
 var experimentContext = require("./exp-ctx");
 
-function experiment (name, fn) {
+function experiment (name, init) {
+
+  assert.equal(typeof name, "string", "first argument must be a string");
+  assert.equal(typeof init, "function", "second argument must be a function");
 
   var params = {};
 
   var _experiment = experimentContext(params);
 
-  fn.call(_experiment, _experiment);
+  init.call(_experiment, _experiment);
 
   function makeObservation (fn, context, args) {
     var start = Date.now();
