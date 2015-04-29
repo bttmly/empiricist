@@ -1,4 +1,5 @@
 var assert = require("assert");
+var async = require("async");
 
 var experimentProto = require("./experiment-proto");
 
@@ -22,67 +23,59 @@ function asyncExperimentFactory (name, init) {
   // last argument is assumed to be the callback, as is customary
   function experiment (...args) {
 
-    // does babel not support (...args, cb)?? why?
     var finish = args.pop(),
         ctx    = experiment._context || this,
-        trial  = {},
-        count  = 2,
-        controlArgs;
+        trial  = {name};
 
-    // early return without running the trial if no candidate or candidate not enabled
     if (!experiment._enabled()) {
-      return experiment.control.apply(ctx, args.concat(finish));
+      experiment.control.apply(ctx, args.concat(finish));
+      return;
     }
 
-    // done is the callback after each of control/candidate runs
-    // it will call the final callback (finish) once both run
-    function done (...args) {
-      if (args.length) controlArgs = args;
-      if (--count) return;
+    var options = {trial, args, ctx, metadata: experiment._metadata};
+
+    var controlOptions = Object.assign({
+      fn: experiment.control,
+      which: "control"
+    }, options);
+
+    var candidateOptions = Object.assign({
+      fn: experiment.candidate,
+      which: "candidate"
+    }, options);
+
+    async.map([controlOptions, candidateOptions], makeAsyncObservation, function (_, [args]) {
       experiment._report(experiment._clean(trial));
-      finish(...controlArgs);
-    }
-
-    // make observation is run for each of control and candidate
-    // it records characteristics about each and saves them to the trial object
-    function makeObservation (fn, context, args, options, cb) {
-      var start = Date.now();
-      var observation = {name, args, metadata: experiment._metadata};
-
-      if (options.which === "candidate") {
-        // need a try/catch around candidate to avoid throwing if candidate throws
-        // plus, we want to report out the error
-        try {
-          observation.returned = fn.apply(context, args.concat(next));
-        } catch (e) {
-          observation.error = e;
-          observation.returned = null;
-        }
-      } else {
-        // no try/catch on control so as to not change behavior
-        observation.returned = fn.apply(context, args.concat(next));
-      }
-
-      function next (...cbArgs) {
-        observation.cbArgs = cbArgs;
-        observation.duration = Date.now() - start;
-        trial[options.which] = observation;
-
-        // signal to callback this is the control result by calling with arguments
-        if (options.which === "control") return done(...cbArgs);
-
-        // otherwise call back with no arguments
-        done();
-      }
-
-      return observation.returned;
-    }
-
-    makeObservation(experiment.candidate, ctx, args, {which: "candidate"}, done);
-    return makeObservation(experiment.control, ctx, args, {which: "control"}, done);
+      finish(...args);
+    });
   }
 
   return experiment;
+}
+
+function makeAsyncObservation (options, cb) {
+  var start = Date.now();
+
+  var {fn, trial, ctx, args, metadata, which} = options
+
+  var observation = {args, metadata};
+
+  if (which === "candidate") {
+    try {
+      fn.apply(ctx, args.concat(next));
+    } catch (e) {
+      observation.error = e;
+    }
+  } else {
+    fn.apply(ctx, args.concat(next));
+  }
+
+  function next (...cbArgs) {
+    observation.cbArgs = cbArgs;
+    observation.duration = Date.now() - start;
+    trial[which] = observation;
+    cb(null, cbArgs);
+  }
 }
 
 module.exports = asyncExperimentFactory;

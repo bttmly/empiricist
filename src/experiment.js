@@ -2,6 +2,8 @@ var assert = require("assert");
 
 var experimentProto = require("./experiment-proto");
 
+var {shouldRun, assertFn} = require("./util");
+
 function experimentFactory (name, init) {
 
   assert.equal(typeof name, "string", "first argument must be a string");
@@ -9,51 +11,36 @@ function experimentFactory (name, init) {
   Object.assign(experiment, experimentProto());
 
   if (init != null) {
-    assert.equal(typeof init, "function", "second argument must be a function");
+    assert.equal(typeof init, "function", "If provided, init argument must be a function");
     init.call(experiment, experiment);
   }
 
-  function shouldRun () {
-    return (
-      typeof experiment.candidate === "function" &&
-      experiment._enabled()
-    );
-  }
-
   function experiment (...args) {
-    if (typeof experiment.control !== "function") {
-      throw new Error("Can't run experiment without control function.");
-    }
+
+    assert.equal(typeof experiment.control, "function", "Can't run experiment without control");
 
     var ctx = experiment._context || this;
 
-    // early return with no trial recording if no candidate or candidate not enabled
-    if (!shouldRun()) {
+    if (!shouldRun(experiment)) {
       return experiment.control.apply(ctx, args);
     }
 
-    function makeObservation (fn, context, args, options) {
-      var start = Date.now();
-      var observation = {name, args, metadata: experiment._metadata};
+    var options = {args, ctx, metadata: experiment._metadata};
 
-      if (options.which === "candidate") {
-        try {
-          observation.returned = fn.apply(context, args);
-        } catch (e) {
-          observation.returned = null;
-          observation.error = e;
-        }
-      } else {
-        observation.returned = fn.apply(context, args);
-      }
+    var candidateOptions = Object.assign({
+      fn: experiment.candidate,
+      which: "candidate"
+    }, options);
 
-      observation.duration = Date.now() - start;
-      return observation;
-    }
+    var controlOptions = Object.assign({
+      fn: experiment.control,
+      which: "control"
+    }, options);
 
     var trial = {
-      control: makeObservation(experiment.control, ctx, args, {which: "control"}),
-      candidate: makeObservation(experiment.candidate, ctx, args, {which: "candidate"})
+      name: name,
+      control: makeObservation(controlOptions),
+      candidate: makeObservation(candidateOptions)
     };
 
     experiment._report(experiment._clean(trial));
@@ -62,6 +49,28 @@ function experimentFactory (name, init) {
   };
 
   return experiment;
+}
+
+function makeObservation (options) {
+  var {args, fn, which, metadata, ctx} = options
+  
+  var start = Date.now();
+
+  var observation = {args, metadata};
+
+  if (which === "candidate") {
+    try {
+      observation.returned = fn.apply(ctx, args);
+    } catch (e) {
+      observation.returned = null;
+      observation.error = e;
+    }
+  } else {
+    observation.returned = fn.apply(ctx, args);
+  }
+
+  observation.duration = Date.now() - start;
+  return observation;
 }
 
 module.exports = experimentFactory;

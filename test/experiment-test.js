@@ -172,15 +172,60 @@ describe("experiment 'factory'", () => {
       expect(trials.length).to.equal(1);
 
       expect(trials[0]).to.deep.equal({
+        name: "test",
         control: { 
-          name: 'test',
           args: [ 2, 3 ],
           metadata: {},
           returned: 5,
           duration: 0
         },
         candidate: {
-          name: 'test',
+          args: [ 2, 3 ],
+          metadata: {},
+          returned: 6,
+          duration: 0
+        }
+      });
+    });
+  });
+
+  describe("#clean", function () {
+    it("is applied to a trial object before it gets to the reporter", function () {
+      var trials = [];
+      var reporter = sinon.spy(function (arg) {
+        trials.push(arg);
+      });
+
+      var cleaner = sinon.spy(function (result) {
+        return {
+          name: result.name,
+          control: result.control.returned,
+          candidate: result.candidate.returned
+        };
+      });
+
+      var exp = experiment("test", function (e) {
+        e.use(function (a, b) { return a + b });
+        e.try(function (a, b) { return a * b });
+        e.report(reporter);
+        e.clean(cleaner);
+      });
+
+      exp(2, 3);
+
+      expect(reporter.callCount).to.equal(1);
+      expect(cleaner.callCount).to.equal(1);
+      expect(trials.length).to.equal(1);
+
+      expect(cleaner.args[0][0]).to.deep.equal({
+        name: "test",
+        control: { 
+          args: [ 2, 3 ],
+          metadata: {},
+          returned: 5,
+          duration: 0
+        },
+        candidate: {
           args: [ 2, 3 ],
           metadata: {},
           returned: 6,
@@ -188,11 +233,13 @@ describe("experiment 'factory'", () => {
         }
       });
 
+      expect(reporter.args[0][0]).to.deep.equal({
+        name: "test",
+        control: 5,
+        candidate: 6
+      });
+
     });
-  });
-
-  describe("#clean", function () {
-
   });
 
   describe("#enabled", function () {

@@ -1,21 +1,6 @@
 var assert = require("assert");
 
-function arg (type, fn) {
-  return function (_arg) {
-    assert.equal(typeof _arg, type, "Argument must be a " + type);
-    return fn.call(this, arg);
-  }
-}
-
-function callableOnce (fn) {
-  var called = false;
-  return function () {
-    if (called) {
-      throw new Error("Function may only be called once");
-    }
-    return fn.apply(this, arguments);
-  }
-}
+var {assertFn} = require("./util");
 
 function noop () {}
 
@@ -26,37 +11,43 @@ function alwaysTrue () { return true; }
 var experimentProto = {
 
   use: function (fn) {
+    assertFn(fn);
     this.control = fn;
     return this;
   },
 
   try: function (fn) {
+    assertFn(fn);
     this.candidate = fn;
     return this;
   },
 
-  metadata: function (obj) {
-    assign(this._metadata, obj);
-    return this;
-  },
-
   enabled: function (fn) {
+    assertFn(fn);
     this._enabled = fn;
     return this;
   },
 
   report: function (fn) {
+    assertFn(fn);
     this._report = fn;
     return this;
   },
 
   clean: function (fn) {
-    this._cleaner = fn;
+    assertFn(fn);
+    this._clean = fn;
     return this;
   },
 
   beforeRun: function (fn) {
+    assertFn(fn);
     this._beforeRun.push(fn);
+    return this;
+  },
+
+  metadata: function (obj) {
+    Object.assign(this._metadata, obj);
     return this;
   },
 
@@ -64,8 +55,8 @@ var experimentProto = {
     this._context = ctx;
     return this;
   }
-};
 
+};
 
 function makeExperiment () {
   return Object.assign({
