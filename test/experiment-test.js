@@ -1,9 +1,17 @@
 require("babel/register");
 
+var _ = require("lodash");
 var expect = require("chai").expect;
 var sinon = require("sinon");
 
 var experiment = require("../src/experiment");
+
+function stripRandomFields (obj) {
+  var ret = _.omit(obj, "id")
+  ret.control = _.omit(ret.control, "duration");
+  ret.candidate = _.omit(ret.candidate, "duration");
+  return ret;
+}
 
 describe("experiment 'factory'", () => {
 
@@ -171,19 +179,17 @@ describe("experiment 'factory'", () => {
       expect(spy.calledOnce).to.equal(true);
       expect(trials.length).to.equal(1);
 
-      expect(trials[0]).to.deep.equal({
+      expect(stripRandomFields(trials[0])).to.deep.equal({
         name: "test",
         control: { 
           args: [ 2, 3 ],
           metadata: {},
           returned: 5,
-          duration: 0
         },
         candidate: {
           args: [ 2, 3 ],
           metadata: {},
           returned: 6,
-          duration: 0
         }
       });
     });
@@ -217,19 +223,17 @@ describe("experiment 'factory'", () => {
       expect(cleaner.callCount).to.equal(1);
       expect(trials.length).to.equal(1);
 
-      expect(cleaner.args[0][0]).to.deep.equal({
+      expect(stripRandomFields(cleaner.args[0][0])).to.deep.equal({
         name: "test",
         control: { 
           args: [ 2, 3 ],
           metadata: {},
           returned: 5,
-          duration: 0
         },
         candidate: {
           args: [ 2, 3 ],
           metadata: {},
           returned: 6,
-          duration: 0
         }
       });
 

@@ -10,6 +10,10 @@ module.exports = {
     );
   },
 
+  makeId () {
+    return Date.now() + "-" + Math.random().toString(16).slice(2);
+  },
+
   assertFn (maybeFn) {
     assert.equal(typeof maybeFn, "function", "Argument must be a function.");
   }

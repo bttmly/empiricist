@@ -2,7 +2,7 @@ var assert = require("assert");
 
 var experimentProto = require("./experiment-proto");
 
-var {shouldRun, assertFn} = require("./util");
+var {shouldRun, makeId} = require("./util");
 
 function experimentFactory (name, init) {
 
@@ -38,6 +38,7 @@ function experimentFactory (name, init) {
     }, options);
 
     var trial = {
+      id: makeId(),
       name: name,
       control: makeObservation(controlOptions),
       candidate: makeObservation(candidateOptions)

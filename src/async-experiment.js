@@ -1,6 +1,8 @@
 var assert = require("assert");
 var async = require("async");
 
+var {makeId, shouldRun} = require("./util");
+
 var experimentProto = require("./experiment-proto");
 
 // internal callback chain:
@@ -25,9 +27,9 @@ function asyncExperimentFactory (name, init) {
 
     var finish = args.pop(),
         ctx    = experiment._context || this,
-        trial  = {name};
+        trial  = {name, id: makeId()};
 
-    if (!experiment._enabled()) {
+    if (!shouldRun()) {
       experiment.control.apply(ctx, args.concat(finish));
       return;
     }
