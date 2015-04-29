@@ -1,6 +1,6 @@
 var assert = require("assert");
 
-var experimentProto = require("./exp-ctx");
+var experimentProto = require("./experiment-proto");
 
 // internal callback chain:
 // makeObservation(control) -> next() -> done()
@@ -10,7 +10,13 @@ var experimentProto = require("./exp-ctx");
 function asyncExperimentFactory (name, init) {
 
   assert.equal(typeof name, "string", "first argument must be a string");
-  assert.equal(typeof init, "function", "second argument must be a function");
+  
+  Object.assign(experiment, experimentProto());
+  
+  if (init != null) {
+    assert.equal(typeof init, "function", "second argument must be a function");
+    init.call(experiment, experiment);
+  }
 
   // this function is what gets returned, decorated with all the experiment properties and methods
   // last argument is assumed to be the callback, as is customary
@@ -18,13 +24,13 @@ function asyncExperimentFactory (name, init) {
 
     // does babel not support (...args, cb)?? why?
     var finish = args.pop(),
-        ctx    = experiment.context || this,
+        ctx    = experiment._context || this,
         trial  = {},
         count  = 2,
         controlArgs;
 
     // early return without running the trial if no candidate or candidate not enabled
-    if (!experiment.enabled()) {
+    if (!experiment._enabled()) {
       return experiment.control.apply(ctx, args.concat(finish));
     }
 
@@ -33,7 +39,7 @@ function asyncExperimentFactory (name, init) {
     function done (...args) {
       if (args.length) controlArgs = args;
       if (--count) return;
-      experiment.reporter(experiment.cleaner(trial));
+      experiment._report(experiment._clean(trial));
       finish(...controlArgs);
     }
 
@@ -41,7 +47,7 @@ function asyncExperimentFactory (name, init) {
     // it records characteristics about each and saves them to the trial object
     function makeObservation (fn, context, args, options, cb) {
       var start = Date.now();
-      var observation = {name, args, metadata: experiment.metadata};
+      var observation = {name, args, metadata: experiment._metadata};
 
       if (options.which === "candidate") {
         // need a try/catch around candidate to avoid throwing if candidate throws
@@ -75,16 +81,8 @@ function asyncExperimentFactory (name, init) {
     makeObservation(experiment.candidate, ctx, args, {which: "candidate"}, done);
     return makeObservation(experiment.control, ctx, args, {which: "control"}, done);
   }
-  
-
-  Object.assign(experiment, experimentProto());
-
-  // in init function, allow access to experiment object either under this or as argument
-  // @try @use might be nicer in CoffeeScript, fluent e.use().try() chaining probably better for JS
-  init.call(experiment, experiment);
 
   return experiment;
-
 }
 
 module.exports = asyncExperimentFactory;

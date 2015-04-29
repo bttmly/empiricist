@@ -11,8 +11,9 @@ describe("experiment 'factory'", () => {
     expect(() => experiment()).to.throw(/argument must be a string/i);
   });
 
-  it("takes an `init` function as it's second argument", () => {
-    expect(() => experiment("")).to.throw(/argument must be a function/i)
+  it("takes an `init` function as it's optional second argument", () => {
+    expect(() => experiment("")).to.not.throw();
+    expect(() => experiment("", "")).to.throw(/argument must be a function/i);
   });
 
   it("returns a function", () => {
@@ -36,6 +37,45 @@ describe("experiment 'factory'", () => {
       expect(arg).to.equal(ctx);
       expect(arg).to.equal(exp);
     });
+
+  });
+
+  describe("#use", function () {
+    it("sets the experiment's control behavior", () => {
+      function sayHi () { return "Hello!"; }
+
+      var exp = experiment("test", function (e) {
+        e.use(sayHi);
+      });
+
+      expect(exp.control).to.equal(sayHi);
+      expect(exp()).to.equal(sayHi());
+    });
+
+    it("an experiment will throw an error when called if not set", () => {
+      var exp = experiment("test", function (e) {});
+
+      expect(() => exp()).to.throw(/can't run experiment without control/i);
+    });
+  });
+
+  describe("#try", function () {
+
+  });
+
+  describe("#context", function () {
+
+  });
+
+  describe("#report", function () {
+
+  });
+
+  describe("#clean", function () {
+
+  });
+
+  describe("#enabled", function () {
 
   });
 
