@@ -57,6 +57,14 @@ describe("experiment 'factory'", () => {
 
       expect(() => exp()).to.throw(/can't run experiment without control/i);
     });
+
+    it("an experiment whose control behavior throws an error will throw that error", () => {
+      var exp = experiment("test", function (e) {
+        e.use(function () { throw new Error("Kaboom!") });
+      })
+
+      expect(() => exp()).to.throw(/kaboom/i);
+    });
   });
 
   describe("#try", function () {
@@ -82,14 +90,105 @@ describe("experiment 'factory'", () => {
       expect(sayHi.callCount).to.equal(1);
       expect(sayBye.callCount).to.equal(1);
     });
+
+    it("an experiment whose candidate behavior throws an error will not throw", () => {
+      var exp = experiment("test", function (e) {
+        e.use(function () { return "didn't throw" })
+        e.try(function () { throw new Error("Kaboom!") });
+      });
+
+      expect(exp()).to.equal("didn't throw");
+    });
   });
 
   describe("#context", function () {
 
+    it("sets the experiment's `this` context", () => {
+      var ctx;
+      var obj = {};
+      var exp = experiment("test", function (e) {
+        e.use(function () {
+          ctx = this;
+        });
+        e.context(obj);
+      });
+
+      exp();
+      expect(ctx).to.equal(obj);
+    });
+
+    it("overrides calling context if set", function () {
+      var ctx;
+      var obj1 = {};
+      var obj2 = {};
+
+      var exp = experiment("test", function (e) {
+        e.use(function () {
+          ctx = this;
+        });
+        e.context(obj1);
+      });
+
+      exp.call(obj2)
+      expect(ctx).to.equal(obj1);
+
+    });
+
+    it("defers to the calling context if unset", () => {
+      var ctx;
+      var obj = {};
+
+      var exp = experiment("test", function (e) {
+        e.use(function () {
+          ctx = this;
+        });
+      });
+
+      exp.call(obj)
+      expect(ctx).to.equal(obj);
+
+    });
+
   });
 
   describe("#report", function () {
+    var trials = [];
 
+    var spy = sinon.spy(function (arg) {
+      trials.push(arg);
+    });
+
+    it("sets the experiment's trial reporter", function () {
+
+      var exp = experiment("test", function (e) {
+        e.use(function (a, b) { return a + b });
+        e.try(function (a, b) { return a * b });
+        e.report(spy);
+      });
+
+      exp(2, 3);
+
+      expect(spy.calledOnce).to.equal(true);
+      expect(trials.length).to.equal(1);
+
+      expect(trials[0]).to.deep.equal({
+        control: { 
+          name: 'test',
+          args: [ 2, 3 ],
+          metadata: {},
+          returned: 5,
+          duration: 0
+        },
+        candidate: {
+          name: 'test',
+          args: [ 2, 3 ],
+          metadata: {},
+          returned: 6,
+          duration: 0
+        }
+      });
+
+    });
   });
 
   describe("#clean", function () {
