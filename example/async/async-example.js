@@ -1,6 +1,8 @@
+require("babel/register");
+
 var assert = require("assert");
 
-var asyncExperiment = require("../../js/async-experiment.js");
+var asyncExperiment = require("../../src/async-experiment.js");
 
 function multiply (a, b) { return a * b; }
 

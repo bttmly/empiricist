@@ -4,58 +4,55 @@ function id (x) { return x; }
 
 function alwaysTrue () { return true; }
 
-function experimentContext (params) {
+var experimentProto = {
+  use: function (fn) {
+    this.control = fn;
+    return this;
+  },
 
-  Object.assign(params, {
+  try: function (fn) {
+    this.candidate = fn;
+    return this;
+  },
+
+  metadata: function (obj) {
+    assign(this.metadata, obj);
+    return this;
+  },
+
+  context: function (ctx) {
+    this.context = ctx;
+    return this;
+  },
+
+  enabled: function (fn) {
+    if (fn == null) {
+      return typeof this.candidate === "function" && this.enabler();
+    }
+    this.enabler = fn;
+    return this;
+  },
+
+  report: function (fn) {
+    this.reporter = fn;
+    return this;
+  },
+
+  clean: function (fn) {
+    this.cleaner = fn;
+    return this;
+  }
+};
+
+
+function makeExperiment () {
+  return Object.assign({
     results: [],
     metadata: {},
     cleaner: id,
     reporter: noop,
-    enabled: alwaysTrue
-  });
-
-  var _experiment = {
-    use: function (fn) {
-      params.control = fn;
-      return _experiment;
-    },
-
-    try: function (fn) {
-      params.candidate = fn;
-      return _experiment;
-    },
-
-    metadata: function (obj) {
-      assign(params.metadata, obj);
-      return _experiment;
-    },
-
-    context: function (ctx) {
-      params.context = ctx;
-      return _experiment;
-    },
-
-    enabled: function (fn) {
-      if (fn == null) {
-        return typeof params.candidate === "function" && params.enabled();
-      }
-      params.enabled = fn;
-      return _experiment;
-    },
-
-    report: function (fn) {
-      params.reporter = fn;
-      return _experiment;
-    },
-
-    clean: function (fn) {
-      params.cleaner = fn;
-      return _experiment;
-    }
-  };
-
-  return _experiment;
-
+    enabler: alwaysTrue
+  }, experimentProto);
 }
 
-module.exports = experimentContext;
+module.exports = makeExperiment;

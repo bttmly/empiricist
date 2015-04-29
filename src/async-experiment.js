@@ -1,37 +1,61 @@
-var experimentContext = require("./exp-ctx");
+var assert = require("assert");
 
-function asyncExperiment (name, init) {
+var experimentProto = require("./exp-ctx");
 
-  var params = {};
+// internal callback chain:
+// makeObservation(control) -> next() -> done()
+// makeObservation(candidate) -> next() -> done()
+// after 2 calls to done(), finish()
 
-  var _experiment = experimentContext(params);
+function asyncExperimentFactory (name, init) {
 
-  // in init function, allow access to experiment object either under this or as argument
-  // @try @use might be nicer in CoffeeScript, fluent e.use().try() chaining probably better for JS
-  init.call(_experiment, _experiment);
+  assert.equal(typeof name, "string", "first argument must be a string");
+  assert.equal(typeof init, "function", "second argument must be a function");
 
-  return function (...args) {
+  // this function is what gets returned, decorated with all the experiment properties and methods
+  // last argument is assumed to be the callback, as is customary
+  function experiment (...args) {
 
-    // does babel not support (...args, cb) ?? why?
-    var finish = args.pop();
+    // does babel not support (...args, cb)?? why?
+    var finish = args.pop(),
+        ctx    = experiment.context || this,
+        trial  = {},
+        count  = 2,
+        controlArgs;
 
-    // if no context is provided, fallback to whatever `this` is present
-    var ctx = params.context || this;
-
-    // early return with no trial recording if no candidate or candidate not enabled
-    if (!_experiment.enabled()) {
-      return params.control.apply(ctx, args.concat(finish));
+    // early return without running the trial if no candidate or candidate not enabled
+    if (!experiment.enabled()) {
+      return experiment.control.apply(ctx, args.concat(finish));
     }
 
-    var trial = {};
+    // done is the callback after each of control/candidate runs
+    // it will call the final callback (finish) once both run
+    function done (...args) {
+      if (args.length) controlArgs = args;
+      if (--count) return;
+      experiment.reporter(experiment.cleaner(trial));
+      finish(...controlArgs);
+    }
 
+    // make observation is run for each of control and candidate
+    // it records characteristics about each and saves them to the trial object
     function makeObservation (fn, context, args, options, cb) {
       var start = Date.now();
-      var observation = {name, args, metadata: params.metadata};
+      var observation = {name, args, metadata: experiment.metadata};
 
-      // usually async functions don't return usable values, but not always
-      // (for example, return an object with callback indicating obj is properly initialized)
-      observation.returned = fn.apply(context, args.concat(next))
+      if (options.which === "candidate") {
+        // need a try/catch around candidate to avoid throwing if candidate throws
+        // plus, we want to report out the error
+        try {
+          observation.returned = fn.apply(context, args.concat(next));
+        } catch (e) {
+          observation.error = e;
+          observation.returned = null;
+        }
+      } else {
+        // no try/catch on control so as to not change behavior
+        observation.returned = fn.apply(context, args.concat(next));
+      }
 
       function next (...cbArgs) {
         observation.cbArgs = cbArgs;
@@ -39,37 +63,28 @@ function asyncExperiment (name, init) {
         trial[options.which] = observation;
 
         // signal to callback this is the control result by calling with arguments
-        if (options.which == "control") return cb(...cbArgs);
+        if (options.which === "control") return done(...cbArgs);
 
         // otherwise call back with no arguments
-        cb();
+        done();
       }
 
       return observation.returned;
     }
 
-    // coordinates when to call the final `finish` 
-    var done = (function () {
-      var count = 2, // 1 control, 1 candidate
-          controlArgs;
+    makeObservation(experiment.candidate, ctx, args, {which: "candidate"}, done);
+    return makeObservation(experiment.control, ctx, args, {which: "control"}, done);
+  }
+  
 
-      return function (...args) {
-        if (args.length) {
-          controlArgs = args;
-        }
+  Object.assign(experiment, experimentProto());
 
-        count -= 1;
+  // in init function, allow access to experiment object either under this or as argument
+  // @try @use might be nicer in CoffeeScript, fluent e.use().try() chaining probably better for JS
+  init.call(experiment, experiment);
 
-        if (count) return;
+  return experiment;
 
-        params.reporter(params.cleaner(trial));
-        finish(...controlArgs);
-      };
-    })();
-
-    makeObservation(params.candidate, ctx, args, {which: "candidate"}, done);
-    return makeObservation(params.control, ctx, args, {which: "control"}, done);
-  };
 }
 
-module.exports = asyncExperiment;
+module.exports = asyncExperimentFactory;

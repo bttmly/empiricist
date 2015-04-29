@@ -1,47 +1,48 @@
 var assert = require("assert");
 
-var experimentContext = require("./exp-ctx");
+var experimentProto = require("./exp-ctx");
 
-function experiment (name, init) {
+function experimentFactory (name, init) {
 
   assert.equal(typeof name, "string", "first argument must be a string");
   assert.equal(typeof init, "function", "second argument must be a function");
 
-  var params = {};
 
-  var _experiment = experimentContext(params);
-
-  init.call(_experiment, _experiment);
-
-  function makeObservation (fn, context, args) {
-    var start = Date.now();
-    var observation = {name, args, metadata: params.metadata};
-    observation.returned = fn.apply(context, args);
-    observation.duration = Date.now() - start;
-    return observation;
-  }
-
-  return function (...args) {
-    if (typeof params.control !== "function") {
+  function experiment (...args) {
+    if (typeof experiment.control !== "function") {
       throw new Error("Can't run experiment without control function.");
     }
 
-    var ctx = params.context || this;
+    var ctx = experiment.context || this;
 
     // early return with no trial recording if no candidate or candidate not enabled
-    if (!_experiment.enabled()) {
-      return params.control.apply(ctx, args);
+    if (!experiment.enabled()) {
+      return experiment.control.apply(ctx, args);
+    }
+
+    function makeObservation (fn, context, args) {
+      var start = Date.now();
+      var observation = {name, args, metadata: experiment.metadata};
+      observation.returned = fn.apply(context, args);
+      observation.duration = Date.now() - start;
+      return observation;
     }
 
     var trial = {
-      control: makeObservation(params.control, ctx, args),
-      candidate: makeObservation(params.candidate, ctx, args)
+      control: makeObservation(experiment.control, ctx, args),
+      candidate: makeObservation(experiment.candidate, ctx, args)
     };
 
-    params.reporter(params.cleaner(trial));
+    experiment.reporter(experiment.cleaner(trial));
 
     return trial.control.result;
   };
+
+  Object.assign(experiment, experimentProto());
+
+  init.call(experiment, experiment);
+
+  return experiment;
 }
 
-module.exports = experiment;
+module.exports = experimentFactory;

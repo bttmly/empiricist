@@ -11,16 +11,19 @@
 
 ```
 {
+  type: Enum{"control", "candidate"}
   returned: Any
   duration: Number
   name: String
   metadata: Object
   args: Array
+  error: Error?
   cbArgs: Array?
 }
 ```
 
-(`cbArgs` only present for asyncExperiment observations)
+- `error` maybe present for candidate observations
+- `cbArgs` present for all async experiment observations
 
 
 

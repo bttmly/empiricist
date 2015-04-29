@@ -21,20 +21,20 @@ describe("experiment 'factory'", () => {
 
   describe("init function invocation", () => {
 
-    it("the `this` context of the call and the argument passed to init are the same", () => {
+    it("init's `this` context, init's argument, and experiment return are all same object", () => {
       var spy = sinon.spy(function (e) {
         expect(this).to.equal(e);
       });
 
       var ctx = {};
       var arg = {};
-
-      experiment("test", function (e) {
+      var exp = experiment("test", function (e) {
         ctx = this;
         arg = e;
       });
 
       expect(arg).to.equal(ctx);
+      expect(arg).to.equal(exp);
     });
 
   });

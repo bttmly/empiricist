@@ -1,6 +1,8 @@
+require("babel/register");
+
 var assert = require("assert");
 
-var experiment = require("../../js/experiment.js");
+var experiment = require("../../src/experiment.js");
 
 function multiply (a, b) { return a * b; }
 
