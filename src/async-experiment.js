@@ -12,7 +12,7 @@ function asyncExperimentFactory (name, init) {
   assert.equal(typeof name, "string", "first argument must be a string");
   
   Object.assign(experiment, experimentProto());
-  
+
   if (init != null) {
     assert.equal(typeof init, "function", "second argument must be a function");
     init.call(experiment, experiment);

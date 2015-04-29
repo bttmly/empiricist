@@ -73,7 +73,7 @@ function makeExperiment () {
     _beforeRun: [],
     _metadata: {},
     _clean: id,
-    _report: console.log,
+    _report: noop,
     _enabled: alwaysTrue
   }, experimentProto);
 }

@@ -61,6 +61,27 @@ describe("experiment 'factory'", () => {
 
   describe("#try", function () {
 
+    var sayHi, sayBye, exp;
+
+    beforeEach(() => {      
+      sayHi  = sinon.spy(function () { return "Hi!"  });
+      sayBye = sinon.spy(function () { return "Bye!" });
+      exp = experiment("test", function (e) {
+        e.use(sayHi);
+        e.try(sayBye);
+      });
+    });
+
+    it("sets the experiment's control behavior", () => {
+      expect(exp.candidate).to.equal(sayBye);
+      expect(exp()).to.equal("Hi!");
+    });
+
+    it("it is invoked when the experiment is called", () => {
+      exp();
+      expect(sayHi.callCount).to.equal(1);
+      expect(sayBye.callCount).to.equal(1);
+    });
   });
 
   describe("#context", function () {
