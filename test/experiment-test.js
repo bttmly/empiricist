@@ -13,6 +13,12 @@ function stripRandomFields (obj) {
   return ret;
 }
 
+var add = (a, b) => a + b
+var multiply = (a, b) => a * b
+
+
+
+
 describe("experiment 'factory'", () => {
 
   it("takes a `name` string as it's first argument", () => {
@@ -27,6 +33,9 @@ describe("experiment 'factory'", () => {
   it("returns a function", () => {
     expect(typeof experiment("", () => 0)).to.equal("function");
   });
+
+
+
 
   describe("init function invocation", () => {
 
@@ -48,11 +57,14 @@ describe("experiment 'factory'", () => {
 
   });
 
-  describe("#use", function () {
-    it("sets the experiment's control behavior", () => {
-      function sayHi () { return "Hello!"; }
 
-      var exp = experiment("test", function (e) {
+
+
+  describe("#use", () => {
+    it("sets the experiment's control behavior", () => {
+      var sayHi = () => "Hello!"
+
+      var exp = experiment("test", (e) => {
         e.use(sayHi);
       });
 
@@ -61,28 +73,31 @@ describe("experiment 'factory'", () => {
     });
 
     it("an experiment will throw an error when called if not set", () => {
-      var exp = experiment("test", function (e) {});
+      var exp = experiment("test", () => null);
 
       expect(() => exp()).to.throw(/can't run experiment without control/i);
     });
 
     it("an experiment whose control behavior throws an error will throw that error", () => {
-      var exp = experiment("test", function (e) {
-        e.use(function () { throw new Error("Kaboom!") });
+      var exp = experiment("test", (e) => {
+        e.use(() => {throw new Error("Kaboom!")});
       })
 
       expect(() => exp()).to.throw(/kaboom/i);
     });
   });
 
-  describe("#try", function () {
+
+
+
+  describe("#try", () => {
 
     var sayHi, sayBye, exp;
 
-    beforeEach(() => {      
-      sayHi  = sinon.spy(function () { return "Hi!"  });
-      sayBye = sinon.spy(function () { return "Bye!" });
-      exp = experiment("test", function (e) {
+    beforeEach(() => {
+      sayHi  = sinon.spy(() => "Hi!");
+      sayBye = sinon.spy(() => "Bye!");
+      exp = experiment("test", (e) => {
         e.use(sayHi);
         e.try(sayBye);
       });
@@ -100,24 +115,25 @@ describe("experiment 'factory'", () => {
     });
 
     it("an experiment whose candidate behavior throws an error will not throw", () => {
-      var exp = experiment("test", function (e) {
-        e.use(function () { return "didn't throw" })
-        e.try(function () { throw new Error("Kaboom!") });
+      var exp = experiment("test", (e) => {
+        e.use(() => "didn't throw");
+        e.try(() => {throw new Error("Kaboom!")});
       });
 
       expect(exp()).to.equal("didn't throw");
     });
   });
 
-  describe("#context", function () {
+
+
+
+  describe("#context", () => {
 
     it("sets the experiment's `this` context", () => {
       var ctx;
       var obj = {};
-      var exp = experiment("test", function (e) {
-        e.use(function () {
-          ctx = this;
-        });
+      var exp = experiment("test", (e) => {
+        e.use(function () { ctx = this; });
         e.context(obj);
       });
 
@@ -125,15 +141,13 @@ describe("experiment 'factory'", () => {
       expect(ctx).to.equal(obj);
     });
 
-    it("overrides calling context if set", function () {
+    it("overrides calling context if set", () => {
       var ctx;
       var obj1 = {};
       var obj2 = {};
 
-      var exp = experiment("test", function (e) {
-        e.use(function () {
-          ctx = this;
-        });
+      var exp = experiment("test", (e) => {
+        e.use(function () { ctx = this; });
         e.context(obj1);
       });
 
@@ -146,10 +160,8 @@ describe("experiment 'factory'", () => {
       var ctx;
       var obj = {};
 
-      var exp = experiment("test", function (e) {
-        e.use(function () {
-          ctx = this;
-        });
+      var exp = experiment("test", (e) => {
+        e.use(function () { ctx = this; });
       });
 
       exp.call(obj)
@@ -159,18 +171,19 @@ describe("experiment 'factory'", () => {
 
   });
 
-  describe("#report", function () {
+
+
+
+  describe("#report", () => {
     var trials = [];
 
-    var spy = sinon.spy(function (arg) {
-      trials.push(arg);
-    });
+    var spy = sinon.spy((x) => trials.push(x))
 
-    it("sets the experiment's trial reporter", function () {
+    it("sets the experiment's trial reporter", () => {
 
-      var exp = experiment("test", function (e) {
-        e.use(function (a, b) { return a + b });
-        e.try(function (a, b) { return a * b });
+      var exp = experiment("test", (e) => {
+        e.use(add);
+        e.try(multiply);
         e.report(spy);
       });
 
@@ -181,7 +194,7 @@ describe("experiment 'factory'", () => {
 
       expect(stripRandomFields(trials[0])).to.deep.equal({
         name: "test",
-        control: { 
+        control: {
           args: [ 2, 3 ],
           metadata: {},
           returned: 5,
@@ -195,14 +208,15 @@ describe("experiment 'factory'", () => {
     });
   });
 
-  describe("#clean", function () {
-    it("is applied to a trial object before it gets to the reporter", function () {
-      var trials = [];
-      var reporter = sinon.spy(function (arg) {
-        trials.push(arg);
-      });
 
-      var cleaner = sinon.spy(function (result) {
+
+
+  describe("#clean", () => {
+    it("is applied to a trial object before it gets to the reporter", () => {
+      var trials = [];
+      var reporter = sinon.spy((arg) => trials.push(arg));
+
+      var cleaner = sinon.spy((result) => {
         return {
           name: result.name,
           control: result.control.returned,
@@ -210,9 +224,9 @@ describe("experiment 'factory'", () => {
         };
       });
 
-      var exp = experiment("test", function (e) {
-        e.use(function (a, b) { return a + b });
-        e.try(function (a, b) { return a * b });
+      var exp = experiment("test", (e) => {
+        e.use(add);
+        e.try(multiply);
         e.report(reporter);
         e.clean(cleaner);
       });
@@ -225,7 +239,7 @@ describe("experiment 'factory'", () => {
 
       expect(stripRandomFields(cleaner.args[0][0])).to.deep.equal({
         name: "test",
-        control: { 
+        control: {
           args: [ 2, 3 ],
           metadata: {},
           returned: 5,
@@ -246,13 +260,16 @@ describe("experiment 'factory'", () => {
     });
   });
 
-  describe("#enabled", function () {
+
+
+
+  describe("#enabled", () => {
     it("is run to see if the candidate should be executed", () => {
-      var candidate = sinon.spy((a, b) => a * b);
+      var candidate = sinon.spy(multiply);
       var enabler = sinon.spy(() => false);
 
-      experiment("test", function (e) {
-        e.use((a, b) => a + b);
+      experiment("test", (e) => {
+        e.use(add);
         e.try(candidate);
         e.enabled(enabler);
       })(2, 3);
@@ -263,11 +280,11 @@ describe("experiment 'factory'", () => {
     });
 
     it("is passed the calling arguments", () => {
-      var candidate = sinon.spy((a, b) => a * b);
+      var candidate = sinon.spy(multiply);
       var enabler = sinon.spy(() => true);
 
-      experiment("test", function (e) {
-        e.use((a, b) => a + b);
+      experiment("test", (e) => {
+        e.use(add);
         e.try(candidate);
         e.enabled(enabler);
       })(2, 3);
