@@ -37,7 +37,40 @@ TODO:
 
 Experiment factories wrap a control function (which should be the original code that is being refactored or replaced), and an optional candidate function. When called, the experiment should behave identically to the control function. However, internally it runs the candidate function *also*, as well as records things like execution time and return value of both.
 
-Call `experiment` or `asyncExperiment` like so
+Usage:
+
+```js
+var experiment = require("empiricist").experiment;
+
+function add (a, b) { return a + b; }
+function multiply (a, b) { return a * b; }
+
+var exp = experiment("test", function (e) {
+
+  e.use(add);
+
+  e.try(multiply);
+
+});
+
+exp(2, 3) // returns 5, but runs and saves execution information related to both `add` and `apply`.
+
+```
+
+The `init` function gets the new experiment both as `this` context and as an argument. This is particularly becuase it tends to be nicer in CoffeeScript.
+
+```coffeescript
+{experiment} = require "empiricist"
+
+exp = experiment "test", ->
+  
+  @use (a, b) -> a + b
+
+  @try (a, b) -> a * b
+
+exp 2, 3 # returns 5
+
+```
 
 #### `experiment(String name, Function init)`
 
