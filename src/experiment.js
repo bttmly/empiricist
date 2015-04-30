@@ -27,15 +27,19 @@ function experimentFactory (name, init) {
 
     var options = {args, ctx, metadata: experiment._metadata};
 
-    var candidateOptions = Object.assign({
-      fn: experiment.candidate,
-      which: "candidate"
-    }, options);
-
     var controlOptions = Object.assign({
       fn: experiment.control,
-      which: "control"
+      which: "control",
+      args: args
     }, options);
+
+    var candidateOptions = Object.assign({
+      fn: experiment.candidate,
+      which: "candidate",
+      args: experiment._beforeRun(args)
+    }, options);
+
+
 
     var trial = {
       id: makeId(),

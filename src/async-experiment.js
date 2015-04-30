@@ -28,16 +28,18 @@ function asyncExperimentFactory (name, init) {
       return;
     }
 
-    var options = {trial, args, ctx, metadata: experiment._metadata};
+    var options = {trial, ctx, metadata: experiment._metadata};
 
     var controlOptions = Object.assign({
       fn: experiment.control,
-      which: "control"
+      which: "control",
+      args: args
     }, options);
 
     var candidateOptions = Object.assign({
       fn: experiment.candidate,
-      which: "candidate"
+      which: "candidate",
+      args: experiment._beforeRun(args)
     }, options);
 
     async.map([controlOptions, candidateOptions], makeAsyncObservation, function (_, [args]) {

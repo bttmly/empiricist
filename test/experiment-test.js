@@ -251,13 +251,11 @@ describe("experiment 'factory'", () => {
       var candidate = sinon.spy((a, b) => a * b);
       var enabler = sinon.spy(() => false);
 
-      var exp = experiment("test", function (e) {
+      experiment("test", function (e) {
         e.use((a, b) => a + b);
         e.try(candidate);
         e.enabled(enabler);
-      });
-
-      exp(2, 3);
+      })(2, 3);
 
       expect(enabler.callCount).to.equal(1);
       expect(candidate.callCount).to.equal(0);
@@ -266,15 +264,13 @@ describe("experiment 'factory'", () => {
 
     it("is passed the calling arguments", () => {
       var candidate = sinon.spy((a, b) => a * b);
-      var enabler = sinon.spy(() => false);
+      var enabler = sinon.spy(() => true);
 
-      var exp = experiment("test", function (e) {
+      experiment("test", function (e) {
         e.use((a, b) => a + b);
         e.try(candidate);
         e.enabled(enabler);
-      });
-
-      exp(2, 3);
+      })(2, 3);
 
       expect(enabler.args[0]).to.deep.equal([2, 3]);
     });
