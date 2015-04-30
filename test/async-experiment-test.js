@@ -5,6 +5,7 @@ var expect = require("chai").expect;
 var sinon = require("sinon");
 
 var asyncExperiment = require("../src/async-experiment");
+var experiment = require("../src/experiment");
 
 var {omitNonDeterministic} = require("./helpers");
 
@@ -98,4 +99,39 @@ describe("asyncExperiment 'factory'", () => {
 
   });
 
+  // the tests here only demonstrate that the instance methods of an async experiment
+  // are exactly the same as those of a regular experiment. Thus the tests in
+  // experiment-test.js hold true for async experiment instances.
+  describe("methods", () => {
+
+    var exp = experiment("");
+    var asyncExp = asyncExperiment("");
+
+    it("asyncExperiment#use === experiment#use", () => {
+      expect(asyncExp.use).to.equal(exp.use)
+    });
+
+    it("asyncExperiment#try === experiment#try", () => {
+      expect(asyncExp.try).to.equal(exp.try)
+    });
+
+    it("asyncExperiment#context === experiment#{concontext", () => {
+      expect(asyncExp.context).to.equal(exp.context)
+    });
+
+    it("asyncExperiment#report === experiment#{rereport", () => {
+      expect(asyncExp.report).to.equal(exp.report)
+    });
+
+    it("asyncExperiment#clean === experiment#{cclean", () => {
+      expect(asyncExp.clean).to.equal(exp.clean)
+    });
+
+    it("asyncExperiment#enabled === experiment#{enaenabled", () => {
+      expect(asyncExp.enabled).to.equal(exp.enabled)
+    });
+  });
+
 });
+
+

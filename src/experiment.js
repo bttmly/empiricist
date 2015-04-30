@@ -33,15 +33,17 @@ function experimentFactory (name, init) {
       args: args
     }, options);
 
+    var args2 = experiment._beforeRun(args);
+
     var candidateOptions = Object.assign({
       fn: experiment.candidate,
       which: "candidate",
-      args: experiment._beforeRun(args)
+      args: args2
     }, options);
 
     var trial = {
-      id: makeId(),
       name: name,
+      id: makeId(),
       control: makeObservation(controlOptions),
       candidate: makeObservation(candidateOptions)
     };
@@ -56,6 +58,8 @@ function experimentFactory (name, init) {
 
 function makeObservation (options) {
   var {args, fn, which, metadata, ctx} = options
+
+  console.log(which, args);
 
   var start = Date.now();
 

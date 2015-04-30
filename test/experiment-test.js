@@ -10,10 +10,10 @@ var {omitNonDeterministic} = require("./helpers");
 var add = (a, b) => a + b
 var multiply = (a, b) => a * b
 
+var noop = () => {};
 
 
-
-describe("experiment 'factory'", () => {
+describe("experiment 'constructor'", () => {
 
   it("takes a `name` string as it's first argument", () => {
     expect(() => experiment()).to.throw(/argument must be a string/i);
@@ -50,6 +50,13 @@ describe("experiment 'factory'", () => {
     });
 
   });
+
+});
+
+
+
+
+describe("instance methods", () => {
 
 
 
@@ -287,4 +294,75 @@ describe("experiment 'factory'", () => {
     });
   });
 
+
+
+  describe("#beforeRun", () => {
+
+    var emptyArr, exp, id;
+
+    beforeEach(() => {
+      emptyArr = sinon.spy((arr) => { while (arr.length) arr.pop() });
+      id = sinon.spy(x => x);
+      exp = experiment("test", (e) => {
+        e.use(emptyArr);
+        e.beforeRun(id);
+      });
+    });
+
+
+    it("runs only if the candidate is going to run", () => {
+      exp([1, 2, 3]);
+      expect(id.callCount).to.equal(0);
+
+      var candidate = sinon.spy(noop);
+      exp.try(candidate);
+      exp.enabled(() => false);
+      exp([1, 2, 3]);
+      expect(candidate.callCount).to.equal(0);
+      expect(id.callCount).to.equal(0);
+    });
+
+    it("receives the calling arguments as it's arguments", () => {
+      var a = [1];
+      var b = [2];
+
+      var candidate = sinon.spy(noop);
+      exp.try(candidate);
+
+      exp(a, b);
+
+      expect(id.callCount).to.equal(1);
+
+      expect(id.args[0].length).to.equal(2);
+      var [x, y] = id.args[0];
+      expect(x).to.equal(a);
+      expect(y).to.equal(b);
+    });
+
+    it("the candidate is called with the result of beforeRun", () => {
+      var a = [1, 2, 3, 4];
+
+      before = sinon.spy((args) => {
+        return args.map((a) => a.slice())
+      });
+
+      var candidate = sinon.spy(noop);
+      exp.try(candidate).beforeRun(before);
+
+      exp(a);
+
+      expect(before.callCount).to.equal(1);
+
+      expect(before.returnValues[0]).to.equal(candidate.args[0][0]);
+
+      expect(emptyArr.args[0][0]).to.equal(a);
+      expect(candidate.args[0][0]).to.not.equal(a);
+    });
+
+  });
 });
+
+
+
+
+

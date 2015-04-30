@@ -25,6 +25,8 @@ function asyncExperimentFactory (name, init) {
         ctx    = experiment._context || this,
         trial  = {name, id: makeId()};
 
+    assert.equal(typeof finish, "function", "Last argument must be a callback function");
+
     if (!shouldRun(experiment, args)) {
       experiment.control.apply(ctx, args.concat(finish));
       return;

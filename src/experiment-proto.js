@@ -2,11 +2,10 @@ var assert = require("assert");
 
 var {assertFn} = require("./util");
 
-function noop () {}
-
-function id (x) { return x; }
-
-function alwaysTrue () { return true; }
+var noop = () => {}
+var id = (x) => x
+var alwaysTrue = () => true
+var returnArgs = (...args) => args
 
 var experimentProto = {
 
@@ -42,7 +41,7 @@ var experimentProto = {
 
   beforeRun: function (fn) {
     assertFn(fn);
-    this._beforeRun.push(fn);
+    this._beforeRun = fn;
     return this;
   },
 
@@ -63,7 +62,7 @@ function makeExperiment () {
     _context: null,
     _metadata: {},
     _clean: id,
-    _beforeRun: id,
+    _beforeRun: returnArgs,
     _report: noop,
     _enabled: alwaysTrue
   }, experimentProto);
