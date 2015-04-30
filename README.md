@@ -1,39 +1,4 @@
-`Trial`
-
-```
-// type trial
-{
-  name: String
-  trialId: String
-  control: Observation,
-  candidate: Observation
-}
-```
-
-```
-// type observation
-{
-  type: Enum{"control", "candidate"}
-  returned: Any
-  duration: Number
-  metadata: Object
-  args: Array
-  error: Error?
-  cbArgs: Array?
-}
-```
-
-- `error` maybe present for candidate observations
-- `cbArgs` present for all async experiment observations
-
-
-
-TODO:
-
-- beforeRun
-- docs
-
-## Experiment Factories
+# Empiricist
 
 Experiment factories wrap a control function (which should be the original code that is being refactored or replaced), and an optional candidate function. When called, the experiment should behave identically to the control function. However, internally it runs the candidate function *also*, as well as records things like execution time and return value of both.
 
@@ -53,7 +18,7 @@ var exp = experiment("test", function (e) {
 
 });
 
-exp(2, 3) // returns 5, but runs and saves execution information related to both `add` and `apply`.
+exp(2, 3) // returns 5, but runs both `add` and `multiply` and reports info on them
 
 ```
 
@@ -99,3 +64,36 @@ Only interact with `experiment` objects through their public interface, which co
 
 
 ### Async Gotchas
+
+
+
+### Internal Data Types
+
+
+The Trial type is a struct with the following shape
+
+```
+{
+  name: String
+  id: String
+  control: Observation,
+  candidate: Observation
+}
+```
+
+The Observation type is contained in Trials, and is a struct with the following shape
+
+```
+// type Observation
+{
+  type: Enum{"control", "candidate"}
+  returned: Any
+  duration: Number
+  metadata: Object
+  args: Array
+  error: Error?
+  cbArgs: Array?
+}
+```
+
+### Handling Writes

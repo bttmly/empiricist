@@ -61,7 +61,6 @@ var experimentProto = {
 function makeExperiment () {
   return Object.assign({
     _context: null,
-    _beforeRun: [],
     _metadata: {},
     _clean: id,
     _beforeRun: id,

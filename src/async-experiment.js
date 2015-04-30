@@ -2,13 +2,7 @@ var assert = require("assert");
 var async = require("async");
 
 var {makeId, shouldRun} = require("./util");
-
 var experimentProto = require("./experiment-proto");
-
-// internal callback chain:
-// makeObservation(control) -> next() -> done()
-// makeObservation(candidate) -> next() -> done()
-// after 2 calls to done(), finish()
 
 function asyncExperimentFactory (name, init) {
 
@@ -21,15 +15,15 @@ function asyncExperimentFactory (name, init) {
     init.call(experiment, experiment);
   }
 
-  // this function is what gets returned, decorated with all the experiment properties and methods
-  // last argument is assumed to be the callback, as is customary
   function experiment (...args) {
+
+    assert.equal(typeof experiment.control, "function", "Can't run experiment without control");
 
     var finish = args.pop(),
         ctx    = experiment._context || this,
         trial  = {name, id: makeId()};
 
-    if (!shouldRun()) {
+    if (!shouldRun(experiment)) {
       experiment.control.apply(ctx, args.concat(finish));
       return;
     }
@@ -63,6 +57,7 @@ function makeAsyncObservation (options, cb) {
   var observation = {args, metadata};
 
   if (which === "candidate") {
+    // this wants a domain, but write a test to verify async throw crashes it first
     try {
       fn.apply(ctx, args.concat(next));
     } catch (e) {

@@ -1,7 +1,7 @@
 var assert = require("assert");
 
-var experimentProto = require("./experiment-proto");
 
+var experimentProto = require("./experiment-proto");
 var {shouldRun, makeId} = require("./util");
 
 function experimentFactory (name, init) {
