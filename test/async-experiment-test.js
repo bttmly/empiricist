@@ -6,12 +6,12 @@ var sinon = require("sinon");
 
 var asyncExperiment = require("../src/async-experiment");
 
-// function stripRandomFields (obj) {
-//   var ret = _.omit(obj, "id")
-//   ret.control = _.omit(ret.control, "duration");
-//   ret.candidate = _.omit(ret.candidate, "duration");
-//   return ret;
-// }
+function stripRandomFields (obj) {
+  var ret = _.omit(obj, "id")
+  ret.control = _.omit(ret.control, "duration");
+  ret.candidate = _.omit(ret.candidate, "duration");
+  return ret;
+}
 
 describe("asyncExperiment 'factory'", () => {
 
@@ -43,15 +43,29 @@ describe("asyncExperiment 'factory'", () => {
       var exp = asyncExperiment("test", function (e) {
         e.use(callbackWithTrue);
         e.try(throwInCallback);
-        e.report((args) => trials.push(args));
+        e.report((x) => trials.push(x));
       });
 
       exp((_, x) => {
         expect(x).to.equal(true);
-        var [t] = trials;
-        expect(t.candidate.error).to.exist;
-        expect(t.candidate.error.message).to.equal("Thrown in callback");
-        expect(t.candidate.cbArgs.length).to.equal(0);
+
+        expect(trials[0].candidate.error.message).to.equal("Thrown in callback");
+        delete trials[0].candidate.error;
+
+        expect(stripRandomFields(trials[0])).to.deep.equal({
+          name: "test",
+          control: {
+            args: [],
+            metadata: {},
+            cbArgs: [ null, true ]
+          },
+          candidate: {
+            args: [],
+            metadata: {},
+            cbArgs: []
+          }
+        });
+
         done();
       });
     });
@@ -63,15 +77,26 @@ describe("asyncExperiment 'factory'", () => {
       var exp = asyncExperiment("test", function (e) {
         e.use(callbackWithTrue);
         e.try(callbackWithError);
-        e.report((args) => trials.push(args));
+        e.report((x) => trials.push(x));
       });
 
       exp((_, x) => {
         expect(x).to.equal(true);
-        var [t] = trials;
-        expect(t.candidate.error).to.not.exist;
-        expect(t.candidate.cbArgs.length).to.equal(1);
-        expect(t.candidate.cbArgs[0].message).to.equal("Callback with error");
+
+        expect(stripRandomFields(trials[0])).to.deep.equal({
+          name: "test",
+          control: {
+            args: [],
+            metadata: {},
+            cbArgs: [ null, true ]
+          },
+          candidate: {
+            args: [],
+            metadata: {},
+            cbArgs: [ new Error("Callback with error") ],
+          }
+        });
+
         done();
       });
     });
