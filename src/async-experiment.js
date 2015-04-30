@@ -1,4 +1,6 @@
 var assert = require("assert");
+var domain = require("domain");
+
 var async = require("async");
 
 var {makeId, shouldRun} = require("./util");
@@ -7,7 +9,7 @@ var experimentProto = require("./experiment-proto");
 function asyncExperimentFactory (name, init) {
 
   assert.equal(typeof name, "string", "first argument must be a string");
-  
+
   Object.assign(experiment, experimentProto());
 
   if (init != null) {
@@ -52,24 +54,27 @@ function asyncExperimentFactory (name, init) {
 }
 
 function makeAsyncObservation (options, cb) {
-  var start = Date.now();
-
   var {fn, trial, ctx, args, metadata, which} = options
 
-  var observation = {args, metadata};
+  var start = Date.now(),
+      observation = {args, metadata},
+      d;
+
 
   if (which === "candidate") {
-    // this wants a domain, but write a test to verify async throw crashes it first
-    try {
-      fn.apply(ctx, args.concat(next));
-    } catch (e) {
+    d = domain.create();
+    d.enter();
+    d.on("error", (e) => {
       observation.error = e;
-    }
+      next();
+    });
+    fn.apply(ctx, args.concat(next));
   } else {
     fn.apply(ctx, args.concat(next));
   }
 
   function next (...cbArgs) {
+    if (d) d.exit();
     observation.cbArgs = cbArgs;
     observation.duration = Date.now() - start;
     trial[which] = observation;
