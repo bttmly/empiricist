@@ -6,12 +6,7 @@ var sinon = require("sinon");
 
 var asyncExperiment = require("../src/async-experiment");
 
-function stripRandomFields (obj) {
-  var ret = _.omit(obj, "id")
-  ret.control = _.omit(ret.control, "duration");
-  ret.candidate = _.omit(ret.candidate, "duration");
-  return ret;
-}
+var {omitNonDeterministic} = require("./helpers");
 
 describe("asyncExperiment 'factory'", () => {
 
@@ -40,7 +35,7 @@ describe("asyncExperiment 'factory'", () => {
 
       var trials = [];
 
-      var exp = asyncExperiment("test", function (e) {
+      var exp = asyncExperiment("test", (e) => {
         e.use(callbackWithTrue);
         e.try(throwInCallback);
         e.report((x) => trials.push(x));
@@ -52,7 +47,7 @@ describe("asyncExperiment 'factory'", () => {
         expect(trials[0].candidate.error.message).to.equal("Thrown in callback");
         delete trials[0].candidate.error;
 
-        expect(stripRandomFields(trials[0])).to.deep.equal({
+        expect(omitNonDeterministic(trials[0])).to.deep.equal({
           name: "test",
           control: {
             args: [],
@@ -74,7 +69,7 @@ describe("asyncExperiment 'factory'", () => {
 
       var trials = [];
 
-      var exp = asyncExperiment("test", function (e) {
+      var exp = asyncExperiment("test", (e) => {
         e.use(callbackWithTrue);
         e.try(callbackWithError);
         e.report((x) => trials.push(x));
@@ -83,7 +78,7 @@ describe("asyncExperiment 'factory'", () => {
       exp((_, x) => {
         expect(x).to.equal(true);
 
-        expect(stripRandomFields(trials[0])).to.deep.equal({
+        expect(omitNonDeterministic(trials[0])).to.deep.equal({
           name: "test",
           control: {
             args: [],

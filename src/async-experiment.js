@@ -54,12 +54,11 @@ function asyncExperimentFactory (name, init) {
 }
 
 function makeAsyncObservation (options, cb) {
-  var {fn, trial, ctx, args, metadata, which} = options
+  var {fn, trial, ctx, args, metadata, which} = options;
 
   var start = Date.now(),
       observation = {args, metadata},
       d;
-
 
   if (which === "candidate") {
     d = domain.create();
@@ -68,10 +67,10 @@ function makeAsyncObservation (options, cb) {
       observation.error = e;
       next();
     });
-    fn.apply(ctx, args.concat(next));
-  } else {
-    fn.apply(ctx, args.concat(next));
+    return fn.apply(ctx, args.concat(next));
   }
+
+  fn.apply(ctx, args.concat(next));
 
   function next (...cbArgs) {
     if (d) d.exit();

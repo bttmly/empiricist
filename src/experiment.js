@@ -7,7 +7,7 @@ var {shouldRun, makeId} = require("./util");
 function experimentFactory (name, init) {
 
   assert.equal(typeof name, "string", "first argument must be a string");
-  
+
   Object.assign(experiment, experimentProto());
 
   if (init != null) {
@@ -39,8 +39,6 @@ function experimentFactory (name, init) {
       args: experiment._beforeRun(args)
     }, options);
 
-
-
     var trial = {
       id: makeId(),
       name: name,
@@ -58,7 +56,7 @@ function experimentFactory (name, init) {
 
 function makeObservation (options) {
   var {args, fn, which, metadata, ctx} = options
-  
+
   var start = Date.now();
 
   var observation = {args, metadata};

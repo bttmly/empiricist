@@ -1,17 +1,11 @@
 require("babel/register");
 
-var _ = require("lodash");
 var expect = require("chai").expect;
 var sinon = require("sinon");
 
 var experiment = require("../src/experiment");
 
-function stripRandomFields (obj) {
-  var ret = _.omit(obj, "id")
-  ret.control = _.omit(ret.control, "duration");
-  ret.candidate = _.omit(ret.candidate, "duration");
-  return ret;
-}
+var {omitNonDeterministic} = require("./helpers");
 
 var add = (a, b) => a + b
 var multiply = (a, b) => a * b
@@ -192,7 +186,7 @@ describe("experiment 'factory'", () => {
       expect(spy.calledOnce).to.equal(true);
       expect(trials.length).to.equal(1);
 
-      expect(stripRandomFields(trials[0])).to.deep.equal({
+      expect(omitNonDeterministic(trials[0])).to.deep.equal({
         name: "test",
         control: {
           args: [ 2, 3 ],
@@ -237,7 +231,7 @@ describe("experiment 'factory'", () => {
       expect(cleaner.callCount).to.equal(1);
       expect(trials.length).to.equal(1);
 
-      expect(stripRandomFields(cleaner.args[0][0])).to.deep.equal({
+      expect(omitNonDeterministic(cleaner.args[0][0])).to.deep.equal({
         name: "test",
         control: {
           args: [ 2, 3 ],
