@@ -23,7 +23,7 @@ function asyncExperimentFactory (name, init) {
         ctx    = experiment._context || this,
         trial  = {name, id: makeId()};
 
-    if (!shouldRun(experiment)) {
+    if (!shouldRun(experiment, args)) {
       experiment.control.apply(ctx, args.concat(finish));
       return;
     }

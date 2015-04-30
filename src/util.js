@@ -3,10 +3,10 @@ var assert = require("assert");
 var util = require("util");
 
 module.exports = {
-  shouldRun (experiment) {
+  shouldRun (experiment, args) {
     return (
       typeof experiment.candidate === "function" &&
-      experiment._enabled()
+      experiment._enabled(...args)
     );
   },
 

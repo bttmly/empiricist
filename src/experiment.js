@@ -21,7 +21,7 @@ function experimentFactory (name, init) {
 
     var ctx = experiment._context || this;
 
-    if (!shouldRun(experiment)) {
+    if (!shouldRun(experiment, args)) {
       return experiment.control.apply(ctx, args);
     }
 
