@@ -1,52 +1,63 @@
-var assert = require("assert");
-var domain = require("domain");
+let assert = require("assert");
+let domain = require("domain");
 
-var async = require("async");
+let async = require("async");
 
-var {makeId, shouldRun} = require("./util");
-var experimentProto = require("./experiment-proto");
+let {
+  makeId,
+  shouldRun,
+  isFunction,
+  isString
+} = require("./util");
+
+let experimentProto = require("./experiment-proto");
 
 function asyncExperimentFactory (name, init) {
 
-  assert.equal(typeof name, "string", "first argument must be a string");
+  assert(isString(name), "first argument must be a string");
 
   Object.assign(experiment, experimentProto());
 
   if (init != null) {
-    assert.equal(typeof init, "function", "second argument must be a function");
+    assert(isFunction(init), "second argument must be a function");
     init.call(experiment, experiment);
   }
 
   function experiment (...args) {
 
-    assert.equal(typeof experiment.control, "function", "Can't run experiment without control");
+    assert(isFunction(experiment.control), "Can't run experiment without control")
 
-    var finish = args.pop(),
+    let finish = args.pop(),
         ctx    = experiment._context || this,
         trial  = {name, id: makeId()};
 
-    assert.equal(typeof finish, "function", "Last argument must be a callback function");
+    assert(isFunction(finish), "Last argument must be a callback function");
 
     if (!shouldRun(experiment, args)) {
       experiment.control.apply(ctx, args.concat(finish));
       return;
     }
 
-    var options = {trial, ctx, metadata: experiment._metadata};
+    let options = {trial, ctx, metadata: experiment._metadata};
 
-    var controlOptions = Object.assign({
+    let controlOptions = Object.assign({
       fn: experiment.control,
       which: "control",
       args: args
     }, options);
 
-    var candidateOptions = Object.assign({
+    let candidateArgs = experiment._beforeRun(args);
+
+    assert(Array.isArray(candidateArgs), "beforeRun function must return an array.");
+
+    let candidateOptions = Object.assign({
       fn: experiment.candidate,
       which: "candidate",
-      args: experiment._beforeRun(args)
+      args: candidateArgs
     }, options);
 
-    async.map([controlOptions, candidateOptions], makeAsyncObservation, function (_, [args]) {
+    async.map([controlOptions, candidateOptions], makeAsyncObservation, function (_, results) {
+      let args = results[0];
       experiment._report(experiment._clean(trial));
       finish(...args);
     });
@@ -56,11 +67,19 @@ function asyncExperimentFactory (name, init) {
 }
 
 function makeAsyncObservation (options, cb) {
-  var {fn, trial, ctx, args, metadata, which} = options;
+  let {fn, trial, ctx, args, metadata, which} = options;
 
-  var start = Date.now(),
+  let start = Date.now(),
       observation = {args, metadata},
       d;
+
+  let next = (...cbArgs) => {
+    if (d) d.exit();
+    observation.cbArgs = cbArgs;
+    observation.duration = Date.now() - start;
+    trial[which] = observation;
+    cb(null, cbArgs);
+  }
 
   if (which === "candidate") {
     d = domain.create();
@@ -69,18 +88,12 @@ function makeAsyncObservation (options, cb) {
       observation.error = e;
       next();
     });
+
     return fn.apply(ctx, args.concat(next));
   }
 
   fn.apply(ctx, args.concat(next));
 
-  function next (...cbArgs) {
-    if (d) d.exit();
-    observation.cbArgs = cbArgs;
-    observation.duration = Date.now() - start;
-    trial[which] = observation;
-    cb(null, cbArgs);
-  }
 }
 
 module.exports = asyncExperimentFactory;

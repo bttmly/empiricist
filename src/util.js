@@ -1,20 +1,18 @@
 var assert = require("assert");
 
-var util = require("util");
+let makeId = () =>
+  Date.now() + "-" + Math.random().toString(16).slice(2);
+
+let isFunction = (f) => typeof f === "function";
+
+let isString = (s) => typeof s === "string";
+
+let shouldRun = (experiment, args) =>
+  isFunction(experiment.candidate) && experiment._enabled(...args);
 
 module.exports = {
-  shouldRun (experiment, args) {
-    return (
-      typeof experiment.candidate === "function" &&
-      experiment._enabled(...args)
-    );
-  },
-
-  makeId () {
-    return Date.now() + "-" + Math.random().toString(16).slice(2);
-  },
-
-  assertFn (maybeFn) {
-    assert.equal(typeof maybeFn, "function", "Argument must be a function.");
-  }
+  shouldRun,
+  makeId,
+  isFunction,
+  isString
 };

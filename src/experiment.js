@@ -1,47 +1,53 @@
-var assert = require("assert");
+let assert = require("assert");
 
+let experimentProto = require("./experiment-proto");
 
-var experimentProto = require("./experiment-proto");
-var {shouldRun, makeId} = require("./util");
+let {
+  isFunction,
+  isString,
+  shouldRun,
+  makeId
+} = require("./util");
 
 function experimentFactory (name, init) {
 
-  assert.equal(typeof name, "string", "first argument must be a string");
+  assert(isString(name), "first argument must be a string");
 
   Object.assign(experiment, experimentProto());
 
   if (init != null) {
-    assert.equal(typeof init, "function", "If provided, init argument must be a function");
+    assert(isFunction(init), "If provided, init argument must be a function");
     init.call(experiment, experiment);
   }
 
   function experiment (...args) {
 
-    assert.equal(typeof experiment.control, "function", "Can't run experiment without control");
+    assert(isFunction(experiment.control), "Can't run experiment without control");
 
-    var ctx = experiment._context || this;
+    let ctx = experiment._context || this;
 
-    if (!shouldRun(experiment, args)) {
+    if (!shouldRun(experiment, args))
       return experiment.control.apply(ctx, args);
-    }
 
-    var options = {args, ctx, metadata: experiment._metadata};
+    let options = {ctx, metadata: experiment._metadata};
 
-    var controlOptions = Object.assign({
+    let controlOptions = Object.assign({
       fn: experiment.control,
       which: "control",
       args: args
     }, options);
 
-    var args2 = experiment._beforeRun(args);
+    let candidateArgs = experiment._beforeRun(args);
 
-    var candidateOptions = Object.assign({
+    assert(Array.isArray(candidateArgs), "beforeRun function must return an array.");
+
+    let candidateOptions = Object.assign({
       fn: experiment.candidate,
       which: "candidate",
-      args: args2
+      args: candidateArgs
     }, options);
 
-    var trial = {
+    let trial = {
       name: name,
       id: makeId(),
       control: makeObservation(controlOptions),
@@ -57,13 +63,10 @@ function experimentFactory (name, init) {
 }
 
 function makeObservation (options) {
-  var {args, fn, which, metadata, ctx} = options
+  let {args, fn, which, metadata, ctx} = options
 
-  console.log(which, args);
-
-  var start = Date.now();
-
-  var observation = {args, metadata};
+  let start = Date.now(),
+      observation = {args, metadata};
 
   if (which === "candidate") {
     try {

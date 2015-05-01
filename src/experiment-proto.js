@@ -1,71 +1,70 @@
-var assert = require("assert");
+let assert = require("assert");
 
-var {assertFn} = require("./util");
+let {isFunction} = require("./util");
 
-var noop = () => {}
-var id = (x) => x
-var alwaysTrue = () => true
-var returnArgs = (...args) => args
+let noop = () => {}
+let id = x => x
+let yes = () => true
 
-var experimentProto = {
+let experimentProto = {
 
-  use: function (fn) {
-    assertFn(fn);
+  use (fn) {
+    assert(isFunction(fn), "`use` requires a function argument.");
     this.control = fn;
     return this;
   },
 
-  try: function (fn) {
-    assertFn(fn);
+  try (fn) {
+    assert(isFunction(fn), "`try` requires a function argument.");
     this.candidate = fn;
     return this;
   },
 
-  enabled: function (fn) {
-    assertFn(fn);
+  enabled (fn) {
+    assert(isFunction(fn), "`enabled` requires a function argument.");
     this._enabled = fn;
     return this;
   },
 
-  report: function (fn) {
-    assertFn(fn);
+  report (fn) {
+    assert(isFunction(fn), "`report` requires a function argument.");
     this._report = fn;
     return this;
   },
 
-  clean: function (fn) {
-    assertFn(fn);
+  clean (fn) {
+    assert(isFunction(fn), "`clean` requires a function argument.");
     this._clean = fn;
     return this;
   },
 
-  beforeRun: function (fn) {
-    assertFn(fn);
+  beforeRun (fn) {
+    assert(isFunction(fn), "`beforeRun` requires a function argument.");
     this._beforeRun = fn;
     return this;
   },
 
-  metadata: function (obj) {
+  metadata (obj) {
     Object.assign(this._metadata, obj);
     return this;
   },
 
-  context: function (ctx) {
+  context (ctx) {
     this._context = ctx;
     return this;
   }
 
 };
 
-function makeExperiment () {
+let makeExperiment = () => {
   return Object.assign({
     _context: null,
     _metadata: {},
     _clean: id,
-    _beforeRun: returnArgs,
+    _beforeRun: id,
     _report: noop,
-    _enabled: alwaysTrue
+    _enabled: yes
   }, experimentProto);
-}
+};
 
 module.exports = makeExperiment;
