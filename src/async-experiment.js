@@ -73,7 +73,7 @@ function makeAsyncObservation (options, cb) {
       observation = {args, metadata},
       d;
 
-  function next = (...cbArgs) {
+  function next (...cbArgs) {
     if (d) d.exit();
     observation.cbArgs = cbArgs;
     observation.duration = Date.now() - start;
