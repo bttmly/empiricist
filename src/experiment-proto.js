@@ -2,9 +2,9 @@ let assert = require("assert");
 
 let {isFunction} = require("./util");
 
-let noop = () => {}
-let id = x => x
-let yes = () => true
+function noop () {}
+function id (x) { return x; }
+function yes () { return true; }
 
 let experimentProto = {
 
@@ -56,7 +56,7 @@ let experimentProto = {
 
 };
 
-let makeExperiment = () => {
+function makeExperiment () {
   return Object.assign({
     _context: null,
     _metadata: {},

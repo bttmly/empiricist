@@ -73,7 +73,7 @@ function makeAsyncObservation (options, cb) {
       observation = {args, metadata},
       d;
 
-  let next = (...cbArgs) => {
+  function next = (...cbArgs) {
     if (d) d.exit();
     observation.cbArgs = cbArgs;
     observation.duration = Date.now() - start;
@@ -84,7 +84,7 @@ function makeAsyncObservation (options, cb) {
   if (which === "candidate") {
     d = domain.create();
     d.enter();
-    d.on("error", (e) => {
+    d.on("error", function (e) {
       observation.error = e;
       next();
     });
