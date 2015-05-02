@@ -11,11 +11,8 @@ function add (a, b) { return a + b; }
 function multiply (a, b) { return a * b; }
 
 var exp = experiment("test", function (e) {
-
   e.use(add);
-
   e.try(multiply);
-
 });
 
 exp(2, 3) // returns 5, but runs both `add` and `multiply` and reports info on them
@@ -28,9 +25,7 @@ The `init` function gets the new experiment both as `this` context and as an arg
 {experiment} = require "empiricist"
 
 exp = experiment "test", ->
-  
   @use (a, b) -> a + b
-
   @try (a, b) -> a * b
 
 exp 2, 3 # returns 5
@@ -80,6 +75,7 @@ Experiment objects maintain an internal metadata object that is attached to the 
 
 ### Internal Data Types
 
+The configurable `cleaner` and `reporter` functions interact with data of the following shapes
 
 The Trial type is a struct with the following shape
 
@@ -108,3 +104,18 @@ The Observation type is contained in Trials, and is a struct with the following 
 ```
 
 ### Handling Writes
+
+One issue with running code two functions intended to do the same thing side-by-side is dealing with persistence. The candidate function should probably not be writing to your normal production database, for instance. A possible solution is to use an alternate database for candidate code, while the original code continues to write to the production database. Then, the contents of the scratch database can be verified independently.
+
+```js
+var exp = experiment("with-writes", function (e) {
+  e.use(function (userData, callback) {
+    prodDb.users.insert(userData, callback);
+  });
+
+  e.try(function (userData, callback) {
+    scratchDb.users.insert(userData, callback);
+  });
+});
+```
+
