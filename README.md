@@ -134,7 +134,7 @@ var exp = experiment("with-writes", function (e) {
   });
 
   e.beforeRun(function (userData, options, callback) {
-    var newOptions = _.assign({useScratchDb: true}, options);
+    var newOptions = _.defaults({useScratchDb: true}, options);
     return [userData, newOptions, callback];
   });
 });
