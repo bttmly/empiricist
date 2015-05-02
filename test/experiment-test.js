@@ -1,5 +1,6 @@
 require("babel/register");
 
+let _ = require("lodash");
 let expect = require("chai").expect;
 let sinon = require("sinon");
 
@@ -7,13 +8,10 @@ let experiment = require("../src/experiment");
 
 let {omitNonDeterministic} = require("./helpers");
 
-let clone = (obj) =>
-  Object.keys(obj).reduce((ret, key) => { ret[k] = obj[k] }, {});
-
-function yes () { return true; }
-function no () { return false; }
-function id (x) { return x; }
 function noop () {}
+function id (x) { return x; }
+function no () { return false; }
+function yes () { return true; }
 function add (a, b) { return a + b; }
 function multiply (a, b) { return a * b; }
 
@@ -64,28 +62,19 @@ describe("instance methods", function () {
 
   describe("#use", function () {
     it("sets the experiment's control behavior", function () {
-      let sayHi = () => "Hello!"
-
-      let exp = experiment("test", function (e) {
-        e.use(sayHi);
-      });
-
-      expect(exp.control).to.equal(sayHi);
-      expect(exp()).to.equal(sayHi());
+      let exp = experiment("test").use(yes);
+      expect(exp.control).to.equal(yes);
+      expect(exp()).to.equal(yes());
     });
 
     it("an experiment will throw an error when called if not set", function () {
-      let exp = experiment("test", () => null);
-
-      expect(() => exp()).to.throw(/can't run experiment without control/i);
+      let exp = experiment("test", noop);
+      expect(exp).to.throw(/can't run experiment without control/i);
     });
 
     it("an experiment whose control behavior throws an error will throw that error", function () {
-      let exp = experiment("test", function (e) {
-        e.use(() => {throw new Error("Kaboom!")});
-      })
-
-      expect(() => exp()).to.throw(/kaboom/i);
+      let exp = experiment("test").use(function () { throw new Error("Kaboom!") });
+      expect(exp).to.throw(/kaboom/i);
     });
   });
 
@@ -94,35 +83,34 @@ describe("instance methods", function () {
 
   describe("#try", function () {
 
-    let sayHi, sayBye, exp;
+    let ySpy, nSpy, exp;
 
     beforeEach(() => {
-      sayHi  = sinon.spy(() => "Hi!");
-      sayBye = sinon.spy(() => "Bye!");
-      exp = experiment("test", function (e) {
-        e.use(sayHi);
-        e.try(sayBye);
-      });
+      ySpy  = sinon.spy(yes)
+      nSpy = sinon.spy(no)
+      exp = experiment("test")
+        .use(ySpy)
+        .try(nSpy)
+
     });
 
     it("sets the experiment's control behavior", function () {
-      expect(exp.candidate).to.equal(sayBye);
-      expect(exp()).to.equal("Hi!");
+      expect(exp.candidate).to.equal(nSpy);
+      expect(exp()).to.equal(ySpy());
     });
 
     it("it is invoked when the experiment is called", function () {
       exp();
-      expect(sayHi.callCount).to.equal(1);
-      expect(sayBye.callCount).to.equal(1);
+      expect(ySpy.callCount).to.equal(1);
+      expect(nSpy.callCount).to.equal(1);
     });
 
     it("an experiment whose candidate behavior throws an error will not throw", function () {
-      let exp = experiment("test", function (e) {
-        e.use(() => "didn't throw");
-        e.try(() => {throw new Error("Kaboom!")});
-      });
+      let exp = experiment("test")
+        .use(yes)
+        .try(function () { throw new Error("Kaboom!"); })
 
-      expect(exp()).to.equal("didn't throw");
+      expect(exp()).to.equal(true);
     });
   });
 
@@ -134,10 +122,9 @@ describe("instance methods", function () {
     it("sets the experiment's `this` context", function () {
       let ctx;
       let obj = {};
-      let exp = experiment("test", function (e) {
-        e.use(function () { ctx = this; });
-        e.context(obj);
-      });
+      let exp = experiment("test")
+        .use(function () { ctx = this; })
+        .context(obj)
 
       exp();
       expect(ctx).to.equal(obj);
@@ -148,10 +135,9 @@ describe("instance methods", function () {
       let obj1 = {};
       let obj2 = {};
 
-      let exp = experiment("test", function (e) {
-        e.use(function () { ctx = this; });
-        e.context(obj1);
-      });
+      let exp = experiment("test")
+        .use(function () { ctx = this; })
+        .context(obj1)
 
       exp.call(obj2)
       expect(ctx).to.equal(obj1);
@@ -162,9 +148,8 @@ describe("instance methods", function () {
       let ctx;
       let obj = {};
 
-      let exp = experiment("test", function (e) {
-        e.use(function () { ctx = this; });
-      });
+      let exp = experiment("test")
+        .use(function () { ctx = this; });
 
       exp.call(obj)
       expect(ctx).to.equal(obj);
@@ -187,11 +172,10 @@ describe("instance methods", function () {
 
     it("sets the experiment's trial reporter", function () {
 
-      let exp = experiment("test", function (e) {
-        e.use(add);
-        e.try(multiply);
-        e.report(spy);
-      });
+      let exp = experiment("test")
+        .use(add)
+        .try(multiply)
+        .report(spy)
 
       exp(2, 3);
 
@@ -232,12 +216,11 @@ describe("instance methods", function () {
         };
       });
 
-      let exp = experiment("test", function (e) {
-        e.use(add);
-        e.try(multiply);
-        e.report(reporter);
-        e.clean(cleaner);
-      });
+      let exp = experiment("test")
+        .use(add)
+        .try(multiply)
+        .report(reporter)
+        .clean(cleaner)
 
       exp(2, 3);
 
@@ -278,11 +261,10 @@ describe("instance methods", function () {
       let candidate = sinon.spy(multiply);
       let enabler = sinon.spy(no);
 
-      experiment("test", function (e) {
-        e.use(add);
-        e.try(candidate);
-        e.enabled(enabler);
-      })(2, 3);
+      experiment("test")
+        .use(add)
+        .try(candidate)
+        .enabled(enabler)(2, 3);
 
       expect(enabler.callCount).to.equal(1);
       expect(candidate.callCount).to.equal(0);
@@ -293,11 +275,10 @@ describe("instance methods", function () {
       let candidate = sinon.spy(multiply);
       let enabler = sinon.spy(yes);
 
-      experiment("test", function (e) {
-        e.use(add);
-        e.try(candidate);
-        e.enabled(enabler);
-      })(2, 3);
+      experiment("test")
+        .use(add)
+        .try(candidate)
+        .enabled(enabler)(2, 3);
 
       expect(enabler.args[0]).to.deep.equal([2, 3]);
     });
@@ -310,10 +291,9 @@ describe("instance methods", function () {
 
     beforeEach(() => {
       id = sinon.spy(x => x);
-      exp = experiment("test", function (e) {
-        e.use(x => x);
-        e.beforeRun(id);
-      });
+      exp = experiment("test")
+        .use(x => x)
+        .beforeRun(id)
     });
 
 
@@ -350,7 +330,7 @@ describe("instance methods", function () {
       let o = {};
 
       before = sinon.spy((args) => {
-        return args.map(clone);
+        return args.map(_.clone);
       });
 
       let candidate = sinon.spy(id);
