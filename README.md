@@ -122,6 +122,8 @@ var exp = experiment("with-writes", function (e) {
 Alternately, the data layer could be written such that it can handle this via options. Then, the `beforeRun` hook can add the option, which keeps the candidate code pristine.
 
 ```js
+var _ = require("lodash");
+
 var exp = experiment("with-writes", function (e) {
   e.use(function (userData, options, callback) {
     new User(userData).insert(options, callback);
@@ -133,7 +135,7 @@ var exp = experiment("with-writes", function (e) {
 
   e.beforeRun(function (userData, options, callback) {
     var newOptions = _.assign({useScratchDb: true}, options);
-    return [userData, options, callback];
+    return [userData, newOptions, callback];
   });
 });
 ```
