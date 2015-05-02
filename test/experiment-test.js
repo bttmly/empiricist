@@ -201,11 +201,13 @@ describe("instance methods", function () {
       expect(omitNonDeterministic(trials[0])).to.deep.equal({
         name: "test",
         control: {
+          type: "control",
           args: [ 2, 3 ],
           metadata: {},
           returned: 5,
         },
         candidate: {
+          type: "candidate",
           args: [ 2, 3 ],
           metadata: {},
           returned: 6,
@@ -246,11 +248,13 @@ describe("instance methods", function () {
       expect(omitNonDeterministic(cleaner.args[0][0])).to.deep.equal({
         name: "test",
         control: {
+          type: "control",
           args: [ 2, 3 ],
           metadata: {},
           returned: 5,
         },
         candidate: {
+          type: "candidate",
           args: [ 2, 3 ],
           metadata: {},
           returned: 6,

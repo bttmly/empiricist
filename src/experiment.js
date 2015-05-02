@@ -66,7 +66,7 @@ function makeObservation (options) {
   let {args, fn, which, metadata, ctx} = options
 
   let start = Date.now(),
-      observation = {args, metadata};
+      observation = {args, metadata, type: which};
 
   if (which === "candidate") {
     try {
