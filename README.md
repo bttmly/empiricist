@@ -126,11 +126,11 @@ var _ = require("lodash");
 
 var exp = experiment("with-writes", function (e) {
   e.use(function (userData, options, callback) {
-    new User(userData).insert(options, callback);
+    new OldUserModel(userData).insert(options, callback);
   });
 
   e.try(function (userData, options, callback) {
-    new User(userData).insert(options, callback);
+    new NewUserModel(userData).insert(options, callback);
   });
 
   e.beforeRun(function (userData, options, callback) {
