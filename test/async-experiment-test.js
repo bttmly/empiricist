@@ -1,48 +1,48 @@
 require("babel/register");
 
-var _ = require("lodash");
-var expect = require("chai").expect;
-var sinon = require("sinon");
+let _ = require("lodash");
+let expect = require("chai").expect;
+let sinon = require("sinon");
 
-var asyncExperiment = require("../src/async-experiment");
-var experiment = require("../src/experiment");
+let asyncExperiment = require("../src/async-experiment");
+let experiment = require("../src/experiment");
 
-var {omitNonDeterministic} = require("./helpers");
+let {omitNonDeterministic} = require("./helpers");
 
-describe("asyncExperiment 'factory'", () => {
+describe("asyncExperiment 'factory'", function () {
 
-  describe("error handling", () => {
+  describe("error handling", function () {
 
-    var throwInCallback = (cb) => {
-      setTimeout(() => {
+    function throwInCallback (cb) {
+      setTimeout(function () {
         throw new Error("Thrown in callback");
         cb();
       }, 5)
     };
 
-    var callbackWithError = (cb) => {
-      setTimeout(() => {
+    function callbackWithError (cb) {
+      setTimeout(function () {
         cb(new Error("Callback with error"));
       }, 5);
     };
 
-    var callbackWithTrue = (cb) => {
-      setTimeout(() => {
+    function callbackWithTrue (cb) {
+      setTimeout(function () {
         cb(null, true);
       })
     }
 
-    it("it handles thrown errors in candidate callbacks", (done) => {
+    it("it handles thrown errors in candidate callbacks", function (done) {
 
-      var trials = [];
+      let trials = [];
 
-      var exp = asyncExperiment("test", (e) => {
+      let exp = asyncExperiment("test", function (e) {
         e.use(callbackWithTrue);
         e.try(throwInCallback);
         e.report((x) => trials.push(x));
       });
 
-      exp((_, x) => {
+      exp(function (_, x) {
         expect(x).to.equal(true);
 
         expect(trials[0].candidate.error.message).to.equal("Thrown in callback");
@@ -66,17 +66,17 @@ describe("asyncExperiment 'factory'", () => {
       });
     });
 
-    it("it handles candidate calling back with errors", (done) => {
+    it("it handles candidate calling back with errors", function (done) {
 
-      var trials = [];
+      let trials = [];
 
-      var exp = asyncExperiment("test", (e) => {
+      let exp = asyncExperiment("test", function (e) {
         e.use(callbackWithTrue);
         e.try(callbackWithError);
         e.report((x) => trials.push(x));
       });
 
-      exp((_, x) => {
+      exp(function (_, x) {
         expect(x).to.equal(true);
 
         expect(omitNonDeterministic(trials[0])).to.deep.equal({
@@ -102,32 +102,32 @@ describe("asyncExperiment 'factory'", () => {
   // the tests here only demonstrate that the instance methods of an async experiment
   // are exactly the same as those of a regular experiment. Thus the tests in
   // experiment-test.js hold true for async experiment instances.
-  describe("methods", () => {
+  describe("methods", function () {
 
-    var exp = experiment("");
-    var asyncExp = asyncExperiment("");
+    let exp = experiment("");
+    let asyncExp = asyncExperiment("");
 
-    it("asyncExperiment#use === experiment#use", () => {
+    it("asyncExperiment#use === experiment#use", function () {
       expect(asyncExp.use).to.equal(exp.use)
     });
 
-    it("asyncExperiment#try === experiment#try", () => {
+    it("asyncExperiment#try === experiment#try", function () {
       expect(asyncExp.try).to.equal(exp.try)
     });
 
-    it("asyncExperiment#context === experiment#{concontext", () => {
+    it("asyncExperiment#context === experiment#{concontext", function () {
       expect(asyncExp.context).to.equal(exp.context)
     });
 
-    it("asyncExperiment#report === experiment#{rereport", () => {
+    it("asyncExperiment#report === experiment#{rereport", function () {
       expect(asyncExp.report).to.equal(exp.report)
     });
 
-    it("asyncExperiment#clean === experiment#{cclean", () => {
+    it("asyncExperiment#clean === experiment#{cclean", function () {
       expect(asyncExp.clean).to.equal(exp.clean)
     });
 
-    it("asyncExperiment#enabled === experiment#{enaenabled", () => {
+    it("asyncExperiment#enabled === experiment#{enaenabled", function () {
       expect(asyncExp.enabled).to.equal(exp.enabled)
     });
   });
