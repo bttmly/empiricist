@@ -3,7 +3,7 @@ function makeId () {
 }
 
 function isFunction (f) {
-  typeof f === "function";
+  return typeof f === "function";
 }
 
 function isString (s) {

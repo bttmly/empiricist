@@ -11,12 +11,12 @@ let {
 
 function experimentFactory (name, init) {
 
-  assert(isString(name), "first argument must be a string");
+  assert(isString(name), `first argument must be a string, found ${name}`);
 
   Object.assign(experiment, experimentProto());
 
   if (init != null) {
-    assert(isFunction(init), "If provided, init argument must be a function");
+    assert(isFunction(init), `If provided, init argument must be a function, found ${init}`);
     init.call(experiment, experiment);
   }
 
