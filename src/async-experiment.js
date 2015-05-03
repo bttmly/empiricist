@@ -2,6 +2,7 @@ let assert = require("assert");
 let domain = require("domain");
 
 let async = require("async");
+let assign = require("object-assign");
 
 let {
   makeId,
@@ -16,7 +17,7 @@ function asyncExperimentFactory (name, init) {
 
   assert(isString(name), "first argument must be a string");
 
-  Object.assign(experiment, experimentProto());
+  assign(experiment, experimentProto());
 
   if (init != null) {
     assert(isFunction(init), "second argument must be a function");
@@ -40,7 +41,7 @@ function asyncExperimentFactory (name, init) {
 
     let options = {trial, ctx, metadata: experiment._metadata};
 
-    let controlOptions = Object.assign({
+    let controlOptions = assign({
       fn: experiment.control,
       which: "control",
       args: args
@@ -50,7 +51,7 @@ function asyncExperimentFactory (name, init) {
 
     assert(Array.isArray(candidateArgs), "beforeRun function must return an array.");
 
-    let candidateOptions = Object.assign({
+    let candidateOptions = assign({
       fn: experiment.candidate,
       which: "candidate",
       args: candidateArgs

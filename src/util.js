@@ -1,14 +1,18 @@
-var assert = require("assert");
+function makeId () {
+  return Date.now() + "-" + Math.random().toString(16).slice(2);
+}
 
-let makeId = () =>
-  Date.now() + "-" + Math.random().toString(16).slice(2);
+function isFunction (f) {
+  typeof f === "function";
+}
 
-let isFunction = (f) => typeof f === "function";
+function isString (s) {
+  return typeof s === "string";
+}
 
-let isString = (s) => typeof s === "string";
-
-let shouldRun = (experiment, args) =>
-  isFunction(experiment.candidate) && experiment._enabled(...args);
+function shouldRun (experiment, args) {
+  return isFunction(experiment.candidate) && experiment._enabled(...args);
+}
 
 module.exports = {
   shouldRun,
