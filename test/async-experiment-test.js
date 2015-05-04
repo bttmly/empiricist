@@ -36,11 +36,10 @@ describe("asyncExperiment 'factory'", function () {
 
       let trials = [];
 
-      let exp = asyncExperiment("test", function (e) {
-        e.use(callbackWithTrue);
-        e.try(throwInCallback);
-        e.report((x) => trials.push(x));
-      });
+      let exp = asyncExperiment("test")
+        .use(callbackWithTrue)
+        .try(throwInCallback)
+        .report((x) => trials.push(x));
 
       exp(function (_, x) {
         expect(x).to.equal(true);
@@ -70,11 +69,10 @@ describe("asyncExperiment 'factory'", function () {
 
       let trials = [];
 
-      let exp = asyncExperiment("test", function (e) {
-        e.use(callbackWithTrue);
-        e.try(callbackWithError);
-        e.report((x) => trials.push(x));
-      });
+      let exp = asyncExperiment("test")
+        .use(callbackWithTrue)
+        .try(callbackWithError)
+        .report((x) => trials.push(x));
 
       exp(function (_, x) {
         expect(x).to.equal(true);
@@ -115,19 +113,19 @@ describe("asyncExperiment 'factory'", function () {
       expect(asyncExp.try).to.equal(exp.try)
     });
 
-    it("asyncExperiment#context === experiment#{concontext", function () {
+    it("asyncExperiment#context === experiment#context", function () {
       expect(asyncExp.context).to.equal(exp.context)
     });
 
-    it("asyncExperiment#report === experiment#{rereport", function () {
+    it("asyncExperiment#report === experiment#report", function () {
       expect(asyncExp.report).to.equal(exp.report)
     });
 
-    it("asyncExperiment#clean === experiment#{cclean", function () {
+    it("asyncExperiment#clean === experiment#clean", function () {
       expect(asyncExp.clean).to.equal(exp.clean)
     });
 
-    it("asyncExperiment#enabled === experiment#{enaenabled", function () {
+    it("asyncExperiment#enabled === experiment#enabled", function () {
       expect(asyncExp.enabled).to.equal(exp.enabled)
     });
   });

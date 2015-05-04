@@ -6,19 +6,14 @@ var experiment = require("../../src/experiment.js");
 
 function multiply (a, b) { return a * b; }
 
-var exp = experiment("basic-example", function (e) {
-
-  e.use(function (a, b, c, d) {
+var exp = experiment("basic-example")
+  .use(function (a, b, c, d) {
     return [a, b, c, d].reduce(multiply);
-  });
-
-  e.try(function (a, b, c, d) {
+  })
+  .try(function (a, b, c, d) {
     return [a, b, c, d].reduce(multiply);
-  });
-
-  e.report(console.log);
-
-});
+  })
+  .report(console.log);
 
 console.log("Running basic example...");
 

@@ -10,10 +10,9 @@ var experiment = require("empiricist").experiment;
 function add (a, b) { return a + b; }
 function multiply (a, b) { return a * b; }
 
-var exp = experiment("test", function (e) {
-  e.use(add);
-  e.try(multiply);
-});
+var exp = experiment("test")
+  .use(add)
+  .try(multiply);
 
 exp(2, 3) // returns 5, but runs both `add` and `multiply` and reports info on them
 

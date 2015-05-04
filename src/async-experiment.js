@@ -17,8 +17,6 @@ function asyncExperimentFactory (name, init) {
 
   assert(isString(name), "first argument must be a string");
 
-  assign(experiment, experimentProto());
-
   if (init != null) {
     assert(isFunction(init), "second argument must be a function");
     init.call(experiment, experiment);
@@ -63,6 +61,8 @@ function asyncExperimentFactory (name, init) {
       finish(...args);
     });
   }
+
+  assign(experiment, experimentProto());
 
   return experiment;
 }
