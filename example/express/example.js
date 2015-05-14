@@ -9,7 +9,7 @@ var exp = experiment("express-example")
   .try(function (req, cb) {
     fs.readFile(__dirname + "./small.json", cb);
   })
-  .report(console.log);
+  .report(console.log.bind(console));
 
 });
 
