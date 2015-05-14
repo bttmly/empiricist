@@ -107,15 +107,13 @@ The Observation type is contained in Trials, and is a struct with the following 
 One issue with running code two functions intended to do the same thing side-by-side is dealing with persistence. The candidate function should probably not be writing to your normal production database, for instance. A possible solution is to use an alternate database for candidate code, while the original code continues to write to the production database. Then, the contents of the scratch database can be verified independently.
 
 ```js
-var exp = experiment("with-writes", function (e) {
-  e.use(function (userData, callback) {
+var exp = experiment("with-writes")
+  .use(function (userData, callback) {
     prodDb.users.insert(userData, callback);
-  });
-
-  e.try(function (userData, callback) {
+  })
+  .try(function (userData, callback) {
     scratchDb.users.insert(userData, callback);
   });
-});
 ```
 
 Alternately, the data layer could be written such that it can handle this via options. Then, the `beforeRun` hook can add the option, which keeps the candidate code pristine.
@@ -123,18 +121,16 @@ Alternately, the data layer could be written such that it can handle this via op
 ```js
 var _ = require("lodash");
 
-var exp = experiment("with-writes", function (e) {
-  e.use(function (userData, options, callback) {
+var exp = experiment("with-writes")
+  .use(function (userData, options, callback) {
     new OldUserModel(userData).insert(options, callback);
-  });
-
-  e.try(function (userData, options, callback) {
+  })
+  .try(function (userData, options, callback) {
     new NewUserModel(userData).insert(options, callback);
-  });
-
-  e.beforeRun(function (userData, options, callback) {
+  })
+  .beforeRun(function (userData, options, callback) {
     var newOptions = _.defaults({useScratchDb: true}, options);
     return [userData, newOptions, callback];
   });
-});
+
 ```
