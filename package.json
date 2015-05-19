@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "mocha --compilers js:babel/register ./test/*.js -R spec",
-    "build": "babel src --out-dir lib",
+    "build": "rm -rf ./lib; babel src --out-dir lib",
     "prepublish": "npm run build",
     "examples": "babel-node ./example/async/async-example.js; babel-node ./example/basic/basic-example.js; babel-node ./example/express/index.js;"
   },
