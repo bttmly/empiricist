@@ -14,8 +14,10 @@ var exp = asyncExperiment("express-example", function (e) {
 });
 
 router.get("/", function (req, res) {
-  exp(function (err, data) {
+  exp(req, function (err, data) {
     if (err) return res.statusOut(500);
     res.status(200).json({data});
   });
 });
+
+module.exports = router;
