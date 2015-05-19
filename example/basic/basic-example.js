@@ -2,18 +2,21 @@ require("babel/register");
 
 var assert = require("assert");
 
-var experiment = require("../../src/experiment.js");
+var experiment = require("../../src/sync-experiment.js");
 
 function multiply (a, b) { return a * b; }
 
-var exp = experiment("basic-example")
-  .use(function (a, b, c, d) {
+var exp = experiment("basic-example", function (e) {
+  e.use(function (a, b, c, d) {
     return [a, b, c, d].reduce(multiply);
-  })
-  .try(function (a, b, c, d) {
+  });
+
+  e.try(function (a, b, c, d) {
     return [a, b, c, d].reduce(multiply);
-  })
-  .report(console.log);
+  });
+
+  e.report(console.log);
+});
 
 console.log("Running basic example...");
 

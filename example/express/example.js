@@ -1,16 +1,16 @@
 var fs = require("fs");
 
 var router = require("express").Router();
+var asyncExperiment = require("../../src/async-experiment.js");
 
-var exp = experiment("express-example")
-  .use(function (req, cb) {
+var exp = asyncExperiment("express-example", function (e) {
+  e.use(function (req, cb) {
     fs.readFile(__dirname + "/big.json", cb);
-  })
-  .try(function (req, cb) {
+  });
+  e.try(function (req, cb) {
     fs.readFile(__dirname + "./small.json", cb);
-  })
-  .report(console.log.bind(console));
-
+  });
+  e.report(console.log.bind(console));
 });
 
 router.get("/", function (req, res) {
