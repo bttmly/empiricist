@@ -200,8 +200,16 @@ describe("instance methods", function () {
   });
 
   describe("#metadata", function () {
-    it("merges the argument into the experiment's metadata", function () {
 
+    it("merges the argument into the experiment's metadata", function () {
+      let m;
+      syncExperiment("test", function (e) {
+        m = e._metadata;
+        e.metadata({a: 1});
+        e.use(noop);
+      });
+
+      expect(m.a).to.equal(1);
     });
   });
 
