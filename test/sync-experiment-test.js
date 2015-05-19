@@ -82,15 +82,40 @@ describe("experiment 'constructor'", function () {
 
   });
 
+  it("it supports wrapping constructors", function () {
+
+    class Coffee {
+      constructor () {
+        this.hot = true;
+        this.caffeine = 5;
+      }
+    }
+
+    class Tea {
+      constructor () {
+        this.hot = true;
+        this.caffeine = 1;
+      }
+    }
+
+    var BeverageExperiment = syncExperiment("coffee", function (e) {
+      e.use(Coffee).try(Tea);
+    });
+
+    var bev = new BeverageExperiment();
+
+    expect(bev.hot).to.equal(true);
+    expect(bev.caffeine).to.equal(5);
+    expect(bev instanceof BeverageExperiment).to.equal(true);
+
+  });
+
 });
 
 
 
 
 describe("instance methods", function () {
-
-
-
 
   describe("#use", function () {
     let exp;

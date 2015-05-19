@@ -39,12 +39,14 @@ experimentalAdd 2, 3 # returns 5
 
 
 
-### `experiment` and `asyncExperiment` methods
+### `Experiment` instance methods
 
-Only interact with `experiment` objects through their public interface, which consists of the following methods. The `experiment` is itself a function and should be called just as the control function would be. Asynchronous functions should use the `asyncExperiment` factory.
+During initialization, both `syncExperiment` and `asyncExperiment` expose an underlying `Experiment` instance that is used for configuration. This object's `use()` method **must** be called with a function. The instance methods of Experiments are below. All methods return the instance for chaining.
+
+**Important**: This object is available within the executor, it is not returned from the function call to `syncExperiment` or `asyncExperiment`. Those functions return normal JavaScript function objects that behave like the configured control function.
 
 #### `use(Function control) => Experiment self`
-`use` sets the 'control behavior' of an experiment. This should be the original function that is being refactored or replaced.
+`use` sets the 'control behavior' of an experiment. This should be the original function that is being refactored or replaced. This method must be called properly in the executor or an exception will be thrown.
 
 #### `try(Function candidate) => Experiment self`
 `try` sets the 'candidate behavior' of an experiment. This should be the function that is being developed to replace the 'control behavior'.
@@ -142,3 +144,9 @@ var exp = experiment("with-writes", function (e) {
 });
 
 ```
+
+To do:
+
+- [ ] Increased safety features in executor. Call-at-most-once / call-exactly-once semantics for some methods like `use` and `try` might be nice.
+- [ ] Investigate performance hit, edge cases RE: prototype swapping
+- [ ] Function renaming? How close is close enough to the control?
