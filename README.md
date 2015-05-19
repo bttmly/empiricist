@@ -149,4 +149,5 @@ To do:
 
 - [ ] Increased safety features in executor. Call-at-most-once / call-exactly-once semantics for some methods like `use` and `try` might be nice.
 - [ ] Investigate performance hit, edge cases RE: prototype swapping
+- [ ] Consider if to allow user subclassing of Experiment, and how to allow constructor injection. This would allow consumers to extend the library while maintaining most encapsulation guarantees.
 - [ ] Function renaming? How close is close enough to the control?

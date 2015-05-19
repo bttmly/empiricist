@@ -24,10 +24,6 @@ function syncExperimentFactory (name, executor) {
 
   function experiment (...args) {
 
-    if (this instanceof experiment) {
-
-    }
-
     let ctx = _exp._context || this;
 
     if (!shouldRun(_exp, args))
@@ -69,9 +65,8 @@ function syncExperimentFactory (name, executor) {
     return trial.control.returned;
   };
 
-  // copy own properties from control over to the returned function
+  // now make the returned function look superficially like the control...
   assign(experiment, _exp.control);
-
   swapPrototypes(experiment, _exp.control);
 
   return experiment;
