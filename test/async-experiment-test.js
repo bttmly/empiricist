@@ -5,13 +5,15 @@ let expect = require("chai").expect;
 let sinon = require("sinon");
 
 let asyncExperiment = require("../src/async-experiment");
-let experiment = require("../src/experiment");
+let syncExperiment = require("../src/sync-experiment");
 
 let {omitNonDeterministic} = require("./helpers");
 
-xdescribe("asyncExperiment 'factory'", function () {
+function noop () {}
 
-  xdescribe("error handling", function () {
+describe("asyncExperiment 'factory'", function () {
+
+  describe("error handling", function () {
 
     function throwInCallback (cb) {
       setTimeout(function () {
@@ -35,17 +37,20 @@ xdescribe("asyncExperiment 'factory'", function () {
     it("it handles thrown errors in candidate callbacks", function (done) {
 
       let trials = [];
+      let exp;
 
-      let exp = asyncExperiment("test")
-        .use(callbackWithTrue)
-        .try(throwInCallback)
-        .report((x) => trials.push(x));
+      let fn = asyncExperiment("test", function (ex) {
+        ex.use(callbackWithTrue)
+          .try(throwInCallback)
+          .report((x) => trials.push(x));
+        exp = ex;
+      });
 
-      exp(function (_, x) {
+      fn(function (_, x) {
+
         expect(x).to.equal(true);
-
-        expect(trials[0].candidate.error.message).to.equal("Thrown in callback");
-        delete trials[0].candidate.error;
+        expect(trials[0].candidate.threw.message).to.equal("Thrown in callback");
+        delete trials[0].candidate.threw;
 
         expect(omitNonDeterministic(trials[0])).to.deep.equal({
           name: "test",
@@ -68,13 +73,17 @@ xdescribe("asyncExperiment 'factory'", function () {
     it("it handles candidate calling back with errors", function (done) {
 
       let trials = [];
+      let exp;
 
-      let exp = asyncExperiment("test")
-        .use(callbackWithTrue)
-        .try(callbackWithError)
-        .report((x) => trials.push(x));
+      let fn = asyncExperiment("test", function (ex) {
+        ex.use(callbackWithTrue)
+          .try(callbackWithError)
+          .report((x) => trials.push(x));
 
-      exp(function (_, x) {
+        exp = ex;
+      });
+
+      fn(function (_, x) {
         expect(x).to.equal(true);
 
         expect(omitNonDeterministic(trials[0])).to.deep.equal({
@@ -100,33 +109,35 @@ xdescribe("asyncExperiment 'factory'", function () {
   // the tests here only demonstrate that the instance methods of an async experiment
   // are exactly the same as those of a regular experiment. Thus the tests in
   // experiment-test.js hold true for async experiment instances.
-  xdescribe("methods", function () {
+  describe("methods", function () {
 
-    let exp = experiment("", function () {});
-    let asyncExp = asyncExperiment("", function () {});
+    let asyncInner, syncInner
+
+    syncExperiment("", function (e) { e.use(noop); syncInner = e });
+    asyncExperiment("", function (e) { e.use(noop); asyncInner = e });
 
     it("asyncExperiment#use === experiment#use", function () {
-      expect(asyncExp.use).to.equal(exp.use)
+      expect(asyncInner.use).to.equal(syncInner.use)
     });
 
     it("asyncExperiment#try === experiment#try", function () {
-      expect(asyncExp.try).to.equal(exp.try)
+      expect(asyncInner.try).to.equal(syncInner.try)
     });
 
     it("asyncExperiment#context === experiment#context", function () {
-      expect(asyncExp.context).to.equal(exp.context)
+      expect(asyncInner.context).to.equal(syncInner.context)
     });
 
     it("asyncExperiment#report === experiment#report", function () {
-      expect(asyncExp.report).to.equal(exp.report)
+      expect(asyncInner.report).to.equal(syncInner.report)
     });
 
     it("asyncExperiment#clean === experiment#clean", function () {
-      expect(asyncExp.clean).to.equal(exp.clean)
+      expect(asyncInner.clean).to.equal(syncInner.clean)
     });
 
     it("asyncExperiment#enabled === experiment#enabled", function () {
-      expect(asyncExp.enabled).to.equal(exp.enabled)
+      expect(asyncInner.enabled).to.equal(syncInner.enabled)
     });
   });
 

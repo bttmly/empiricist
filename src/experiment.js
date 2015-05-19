@@ -2,88 +2,71 @@ let assert = require("assert");
 
 let assign = require("object-assign");
 
-let Experiment = require("./experiment-proto");
+let {isFunction} = require("./util");
 
-let {
-  isFunction,
-  isString,
-  shouldRun,
-  makeId
-} = require("./util");
+function noop () {}
+function id (x) { return x; }
+function yes () { return true; }
 
-function experimentFactory (name, executor) {
+class Experiment {
 
-  assert(isString(name), `'name' argument must be a string, found ${name}`);
-  assert(isFunction(executor), `'executor' argument must be a function, found ${executor}`);
-
-  // the experiment object is private, it is only revealed to the caller inside the executor function
-  var exp = new Experiment();
-  executor.call(exp, exp);
-
-  assert(isFunction(exp.control), "Experiment's control function must be set with `e.use()`");
-
-  var result = function (...args) {
-
-    let ctx = exp._context || this;
-
-    if (!shouldRun(exp, args))
-      return exp.control.apply(ctx, args);
-
-    let options = {ctx, metadata: exp._metadata};
-
-    let controlOptions = assign({
-      fn: exp.control,
-      which: "control",
-      args: args
-    }, options);
-
-    let candidateArgs = exp._beforeRun(args);
-
-    assert(Array.isArray(candidateArgs), "beforeRun function must return an array.");
-
-    let candidateOptions = assign({
-      fn: exp.candidate,
-      which: "candidate",
-      args: candidateArgs
-    }, options);
-
-    let trial = {
-      name: name,
-      id: makeId(),
-      control: makeObservation(controlOptions),
-      candidate: makeObservation(candidateOptions)
-    };
-
-    exp._report(exp._clean(trial));
-
-    return trial.control.returned;
-  };
-
-  // copy own properties from control over to the returned function
-  assign(result, exp.control);
-
-  return result;
-}
-
-function makeObservation (options) {
-  let {args, fn, which, metadata, ctx} = options
-
-  let start = Date.now(),
-      observation = {args, metadata, type: which};
-
-  if (which === "candidate") {
-    try {
-      observation.returned = fn.apply(ctx, args);
-    } catch (e) {
-      observation.returned = null;
-      observation.threw = e;
-    }
-  } else {
-    observation.returned = fn.apply(ctx, args);
+  constructor () {
+    assign(this, {
+      _context: null,
+      _metadata: {},
+      _clean: id,
+      _beforeRun: id,
+      _report: noop,
+      _enabled: yes
+    });
   }
 
-  observation.duration = Date.now() - start;
-  return observation;
-}
+  use (fn) {
+    assert(isFunction(fn), "`use` requires a function argument.");
+    this.control = fn;
+    return this;
+  }
 
-module.exports = experimentFactory;
+  try (fn) {
+    assert(isFunction(fn), "`try` requires a function argument.");
+    this.candidate = fn;
+    return this;
+  }
+
+  enabled (fn) {
+    assert(isFunction(fn), "`enabled` requires a function argument.");
+    this._enabled = fn;
+    return this;
+  }
+
+  report (fn) {
+    assert(isFunction(fn), "`report` requires a function argument.");
+    this._report = fn;
+    return this;
+  }
+
+  clean (fn) {
+    assert(isFunction(fn), "`clean` requires a function argument.");
+    this._clean = fn;
+    return this;
+  }
+
+  beforeRun (fn) {
+    assert(isFunction(fn), "`beforeRun` requires a function argument.");
+    this._beforeRun = fn;
+    return this;
+  }
+
+  metadata (obj) {
+    Object.assign(this._metadata, obj);
+    return this;
+  }
+
+  context (ctx) {
+    this._context = ctx;
+    return this;
+  }
+
+};
+
+module.exports = Experiment

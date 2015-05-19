@@ -1,4 +1,4 @@
 module.exports = {
-  experiment: require("./experiment"),
+  syncExperiment: require("./sync-experiment"),
   asyncExperiment: require("./async-experiment")
 };

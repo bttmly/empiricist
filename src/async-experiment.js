@@ -4,6 +4,8 @@ let domain = require("domain");
 let async = require("async");
 let assign = require("object-assign");
 
+let Experiment = require("./experiment");
+
 let {
   makeId,
   shouldRun,
@@ -11,60 +13,57 @@ let {
   isString
 } = require("./util");
 
-let experimentProto = require("./experiment-proto");
+function asyncExperimentFactory (name, executor) {
 
-function asyncExperimentFactory (name, init) {
+  assert(isString(name), `'name' argument must be a string, found ${name}`);
+  assert(isFunction(executor), `'executor' argument must be a function, found ${executor}`);
 
-  assert(isString(name), "first argument must be a string");
+  var exp = new Experiment();
+  executor.call(exp, exp);
 
-  if (init != null) {
-    assert(isFunction(init), "second argument must be a function");
-    init.call(experiment, experiment);
-  }
+  assert(isFunction(exp.control), "Experiment's control function must be set with `e.use()`");
 
-  function experiment (...args) {
-
-    assert(isFunction(experiment.control), "Can't run experiment without control")
+  var result = function (...args) {
 
     let finish = args.pop(),
-        ctx    = experiment._context || this,
+        ctx    = exp._context || this,
         trial  = {name, id: makeId()};
 
     assert(isFunction(finish), "Last argument must be a callback function");
 
-    if (!shouldRun(experiment, args)) {
-      experiment.control.apply(ctx, args.concat(finish));
+    if (!shouldRun(exp, args)) {
+      exp.control.apply(ctx, args.concat(finish));
       return;
     }
 
-    let options = {trial, ctx, metadata: experiment._metadata};
+    let options = {trial, ctx, metadata: exp._metadata};
 
     let controlOptions = assign({
-      fn: experiment.control,
+      fn: exp.control,
       which: "control",
       args: args
     }, options);
 
-    let candidateArgs = experiment._beforeRun(args);
+    let candidateArgs = exp._beforeRun(args);
 
     assert(Array.isArray(candidateArgs), "beforeRun function must return an array.");
 
     let candidateOptions = assign({
-      fn: experiment.candidate,
+      fn: exp.candidate,
       which: "candidate",
       args: candidateArgs
     }, options);
 
     async.map([controlOptions, candidateOptions], makeAsyncObservation, function (_, results) {
       let args = results[0];
-      experiment._report(experiment._clean(trial));
+      exp._report(exp._clean(trial));
       finish(...args);
     });
   }
 
-  assign(experiment, experimentProto());
+  assign(result, exp.control);
 
-  return experiment;
+  return result;
 }
 
 function makeAsyncObservation (options, cb) {
@@ -86,7 +85,7 @@ function makeAsyncObservation (options, cb) {
     d = domain.create();
     d.enter();
     d.on("error", function (e) {
-      observation.error = e;
+      observation.threw = e;
       next();
     });
 
