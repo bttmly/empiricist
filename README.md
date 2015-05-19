@@ -62,9 +62,22 @@ The enabled function is called with the original calling arguments.
 
 #### `report(Function reporter) => Experiment self`
 
+Expected signature of `reporter` argument: 
+
+`reporter :: Object -> Void`
+
 #### `clean(Function cleaner) => Experiment self`
 
+Expected signature of `cleaner` argument: 
+
+`cleaner :: Object -> Object`
+
 #### `beforeRun(Function setup) => Experiment self`
+
+Expected signature of `setup` argument:
+
+`setup :: Array -> Array`
+
 The `setup` function is passed the calling arguments as an array, and must return an array. The candidate function will be called with the result of `setup` rather than the original arguments. This is helpful particularly in the case where an algorithm mangles an object in place since the candidate should receive a clone rather than the original. The function is only called if the candidate will run.
 
 #### `metadata(Object data) => Experiment self`
