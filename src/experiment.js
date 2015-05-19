@@ -1,6 +1,8 @@
 let assert = require("assert");
 
-let experimentProto = require("./experiment-proto");
+let assign = require("object-assign");
+
+let Experiment = require("./experiment-proto");
 
 let {
   isFunction,
@@ -9,40 +11,38 @@ let {
   makeId
 } = require("./util");
 
-function experimentFactory (name, init) {
+function experimentFactory (name, executor) {
 
-  assert(isString(name), `first argument must be a string, found ${name}`);
+  assert(isString(name), `'name' argument must be a string, found ${name}`);
+  assert(isFunction(executor), `'executor' argument must be a function, found ${executor}`);
 
-  Object.assign(experiment, experimentProto());
+  // the experiment object is private, it is only revealed to the caller inside the executor function
+  var exp = new Experiment();
+  executor.call(exp, exp);
 
-  if (init != null) {
-    assert(isFunction(init), `If provided, init argument must be a function, found ${init}`);
-    init.call(experiment, experiment);
-  }
+  assert(isFunction(exp.control), "Experiment's control function must be set with `e.use()`");
 
-  function experiment (...args) {
+  var result = function (...args) {
 
-    assert(isFunction(experiment.control), "Can't run experiment without control");
+    let ctx = exp._context || this;
 
-    let ctx = experiment._context || this;
+    if (!shouldRun(exp, args))
+      return exp.control.apply(ctx, args);
 
-    if (!shouldRun(experiment, args))
-      return experiment.control.apply(ctx, args);
+    let options = {ctx, metadata: exp._metadata};
 
-    let options = {ctx, metadata: experiment._metadata};
-
-    let controlOptions = Object.assign({
-      fn: experiment.control,
+    let controlOptions = assign({
+      fn: exp.control,
       which: "control",
       args: args
     }, options);
 
-    let candidateArgs = experiment._beforeRun(args);
+    let candidateArgs = exp._beforeRun(args);
 
     assert(Array.isArray(candidateArgs), "beforeRun function must return an array.");
 
-    let candidateOptions = Object.assign({
-      fn: experiment.candidate,
+    let candidateOptions = assign({
+      fn: exp.candidate,
       which: "candidate",
       args: candidateArgs
     }, options);
@@ -54,12 +54,15 @@ function experimentFactory (name, init) {
       candidate: makeObservation(candidateOptions)
     };
 
-    experiment._report(experiment._clean(trial));
+    exp._report(exp._clean(trial));
 
     return trial.control.returned;
   };
 
-  return experiment;
+  // copy own properties from control over to the returned function
+  assign(result, exp.control);
+
+  return result;
 }
 
 function makeObservation (options) {
@@ -73,7 +76,7 @@ function makeObservation (options) {
       observation.returned = fn.apply(ctx, args);
     } catch (e) {
       observation.returned = null;
-      observation.error = e;
+      observation.threw = e;
     }
   } else {
     observation.returned = fn.apply(ctx, args);

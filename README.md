@@ -97,7 +97,7 @@ The Observation type is contained in Trials, and is a struct with the following 
   duration: Number
   metadata: Object
   args: Array
-  error: Error?
+  threw: Error?
   cbArgs: Array?
 }
 ```
