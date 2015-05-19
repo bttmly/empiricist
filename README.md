@@ -5,33 +5,36 @@ Experiment factories wrap a control function (which should be the original code 
 Usage:
 
 ```js
-var experiment = require("empiricist").experiment;
+var experiment = require("empiricist").syncExperiment;
 
 function add (a, b) { return a + b; }
 function multiply (a, b) { return a * b; }
 
-var exp = experiment("test")
-  .use(add)
-  .try(multiply);
+var experimentalAdd = experiment("test", function (e) {
+  e.use(add)
+  e.try(multiply);
+});
 
-exp(2, 3) // returns 5, but runs both `add` and `multiply` and reports info on them
+experimentalAdd(2, 3); // returns 5, but runs both `add` and `multiply` and reports info on them
 
 ```
 
-The `init` function gets the new experiment both as `this` context and as an argument. This is particularly becuase it tends to be nicer in CoffeeScript.
+The `executor` function gets the new experiment both as `this` context and as an argument. This is particularly becuase it tends to look nice in CoffeeScript. Properly initializing an experiment with at least a control function is important; failing to properly set up an experiment in the executor will cause an exception.
 
 ```coffeescript
-{experiment} = require "empiricist"
+{syncExperiment} = require "empiricist"
 
-exp = experiment "test", ->
+experimentalAdd = syncExperiment "test", ->
   @use (a, b) -> a + b
   @try (a, b) -> a * b
 
-exp 2, 3 # returns 5
+experimentalAdd 2, 3 # returns 5
 
 ```
 
-#### `experiment(String name, Function init)`
+`epiricist` uses the [revealing constructor pattern](https://blog.domenic.me/the-revealing-constructor-pattern/). Calls to `syncExperiment` and `asyncExperiment` return functions (since they wrap functions), but during initialization an underlying `Experiment` object is exposed to the executor to allow the caller to configure the experiment, while leaving the returned experiment function as externally similar to the control function as possible. This helps ensure calling code cannot become coupled to a hypothetical experiment interface.
+
+#### `experiment(String name, Function executor)`
 
 
 
@@ -107,13 +110,15 @@ The Observation type is contained in Trials, and is a struct with the following 
 One issue with running code two functions intended to do the same thing side-by-side is dealing with persistence. The candidate function should probably not be writing to your normal production database, for instance. A possible solution is to use an alternate database for candidate code, while the original code continues to write to the production database. Then, the contents of the scratch database can be verified independently.
 
 ```js
-var exp = experiment("with-writes")
-  .use(function (userData, callback) {
+var exp = experiment("with-writes", function (e) {
+  e.use(function (userData, callback) {
     prodDb.users.insert(userData, callback);
-  })
-  .try(function (userData, callback) {
+  });
+
+  e.try(function (userData, callback) {
     scratchDb.users.insert(userData, callback);
   });
+})
 ```
 
 Alternately, the data layer could be written such that it can handle this via options. Then, the `beforeRun` hook can add the option, which keeps the candidate code pristine.
@@ -121,16 +126,19 @@ Alternately, the data layer could be written such that it can handle this via op
 ```js
 var _ = require("lodash");
 
-var exp = experiment("with-writes")
-  .use(function (userData, options, callback) {
+var exp = experiment("with-writes", function (e) {
+  e.use(function (userData, options, callback) {
     new OldUserModel(userData).insert(options, callback);
-  })
-  .try(function (userData, options, callback) {
+  });
+
+  e.try(function (userData, options, callback) {
     new NewUserModel(userData).insert(options, callback);
-  })
-  .beforeRun(function (userData, options, callback) {
+  });
+
+  e.beforeRun(function (userData, options, callback) {
     var newOptions = _.defaults({useScratchDb: true}, options);
     return [userData, newOptions, callback];
   });
+});
 
 ```

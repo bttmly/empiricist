@@ -200,7 +200,7 @@ describe("instance methods", function () {
   });
 
   describe("#metadata", function () {
-    xit("merges the argument into the experiment's metadata", function () {
+    it("merges the argument into the experiment's metadata", function () {
 
     });
   });
