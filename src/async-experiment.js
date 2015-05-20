@@ -26,8 +26,8 @@ function asyncExperimentFactory (name, executor) {
   function experiment (...args) {
 
     const finish = args.pop(),
-        ctx    = _exp._context || this,
-        trial  = {name, id: makeId()};
+    const ctx    = _exp._context || this,
+    const trial  = {name, id: makeId()};
 
     assert(isFunction(finish), "Last argument must be a callback function");
 
@@ -67,10 +67,8 @@ function asyncExperimentFactory (name, executor) {
 
 function makeAsyncObservation (options, cb) {
   const {fn, trial, ctx, args, metadata, which} = options;
-
-  const start = Date.now(),
-      observation = {args, metadata};
-
+  const start = Date.now();
+  const observation = {args, metadata};
   let d;
 
   function next (...cbArgs) {
