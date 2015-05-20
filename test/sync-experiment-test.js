@@ -7,6 +7,7 @@ let sinon = require("sinon");
 let syncExperiment = require("../src/sync-experiment");
 let Experiment = require("../src/experiment")
 
+
 let {omitNonDeterministic} = require("./helpers");
 
 function noop () {}
@@ -19,7 +20,7 @@ function multiply (a, b) { return a * b; }
 // minimum amount of work required to initialize an experiment
 function executor (e) { e.use(noop); }
 
-describe("experiment 'constructor'", function () {
+describe("syncExperiment 'constructor'", function () {
 
   it("takes a `name` string as it's required first argument", function () {
     expect(() => syncExperiment()).to.throw(/argument must be a string/i);
@@ -54,34 +55,6 @@ describe("experiment 'constructor'", function () {
 
   });
 
-  describe("init function invocation", function () {
-
-    it("init's `this` context, init's argument are the same object", function () {
-      let ctx = {};
-      let arg = {};
-
-      let fn = syncExperiment("test", function (e) {
-        e.use(noop);
-        ctx = this;
-        arg = e;
-      });
-
-      expect(arg).to.equal(ctx);
-    });
-
-    it("the argument/context is an instance of Experiment", function () {
-      let exp;
-
-      syncExperiment("test", function (e) {
-        e.use(noop);
-        exp = e;
-      });
-
-      expect(exp instanceof Experiment).to.equal(true);
-    });
-
-  });
-
   it("it supports wrapping constructors", function () {
 
     class Coffee {
@@ -107,6 +80,34 @@ describe("experiment 'constructor'", function () {
     expect(bev.hot).to.equal(true);
     expect(bev.caffeine).to.equal(5);
     expect(bev instanceof BeverageExperiment).to.equal(true);
+
+  });
+
+  describe("executor function invocation", function () {
+
+    it("executor's `this` context and executor's argument are the same object", function () {
+      let ctx = {};
+      let arg = {};
+
+      let fn = syncExperiment("test", function (e) {
+        e.use(noop);
+        ctx = this;
+        arg = e;
+      });
+
+      expect(arg).to.equal(ctx);
+    });
+
+    it("the argument/context is an instance of Experiment", function () {
+      let exp;
+
+      syncExperiment("test", function (e) {
+        e.use(noop);
+        exp = e;
+      });
+
+      expect(exp instanceof Experiment).to.equal(true);
+    });
 
   });
 

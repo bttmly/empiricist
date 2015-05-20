@@ -11,12 +11,13 @@ let {
   makeId
 } = require("./util");
 
+
+
 function syncExperimentFactory (name, executor) {
 
   assert(isString(name), `'name' argument must be a string, found ${name}`);
   assert(isFunction(executor), `'executor' argument must be a function, found ${executor}`);
 
-  // the experiment object is private, it is only revealed to the caller inside the executor function
   var _exp = new Experiment();
   executor.call(_exp, _exp);
 
@@ -26,8 +27,9 @@ function syncExperimentFactory (name, executor) {
 
     let ctx = _exp._context || this;
 
-    if (!shouldRun(_exp, args))
+    if (!shouldRun(_exp, args)) {
       return _exp.control.apply(ctx, args);
+    }
 
     let options = {ctx, metadata: _exp._metadata};
 

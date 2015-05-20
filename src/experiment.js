@@ -58,7 +58,7 @@ class Experiment {
   }
 
   metadata (obj) {
-    Object.assign(this._metadata, obj);
+    assign(this._metadata, obj);
     return this;
   }
 

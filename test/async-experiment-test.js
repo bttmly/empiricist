@@ -6,12 +6,14 @@ let sinon = require("sinon");
 
 let asyncExperiment = require("../src/async-experiment");
 let syncExperiment = require("../src/sync-experiment");
+let Experiment = require("../src/experiment");
 
 let {omitNonDeterministic} = require("./helpers");
 
 function noop () {}
 
 describe("asyncExperiment 'factory'", function () {
+
 
   describe("error handling", function () {
 
@@ -104,41 +106,6 @@ describe("asyncExperiment 'factory'", function () {
       });
     });
 
-  });
-
-  // the tests here only demonstrate that the instance methods of an async experiment
-  // are exactly the same as those of a regular experiment. Thus the tests in
-  // experiment-test.js hold true for async experiment instances.
-  describe("methods", function () {
-
-    let asyncInner, syncInner
-
-    syncExperiment("", function (e) { e.use(noop); syncInner = e });
-    asyncExperiment("", function (e) { e.use(noop); asyncInner = e });
-
-    it("asyncExperiment#use === experiment#use", function () {
-      expect(asyncInner.use).to.equal(syncInner.use)
-    });
-
-    it("asyncExperiment#try === experiment#try", function () {
-      expect(asyncInner.try).to.equal(syncInner.try)
-    });
-
-    it("asyncExperiment#context === experiment#context", function () {
-      expect(asyncInner.context).to.equal(syncInner.context)
-    });
-
-    it("asyncExperiment#report === experiment#report", function () {
-      expect(asyncInner.report).to.equal(syncInner.report)
-    });
-
-    it("asyncExperiment#clean === experiment#clean", function () {
-      expect(asyncInner.clean).to.equal(syncInner.clean)
-    });
-
-    it("asyncExperiment#enabled === experiment#enabled", function () {
-      expect(asyncInner.enabled).to.equal(syncInner.enabled)
-    });
   });
 
 });

@@ -18,52 +18,51 @@ function asyncExperimentFactory (name, executor) {
   assert(isString(name), `'name' argument must be a string, found ${name}`);
   assert(isFunction(executor), `'executor' argument must be a function, found ${executor}`);
 
-  var exp = new Experiment();
-  executor.call(exp, exp);
+  var _exp = new Experiment();
+  executor.call(_exp, _exp);
 
-  assert(isFunction(exp.control), "Experiment's control function must be set with `e.use()`");
+  assert(isFunction(_exp.control), "Experiment's control function must be set with `e.use()`");
 
-  var result = function (...args) {
+  function experiment (...args) {
 
     let finish = args.pop(),
-        ctx    = exp._context || this,
+        ctx    = _exp._context || this,
         trial  = {name, id: makeId()};
 
     assert(isFunction(finish), "Last argument must be a callback function");
 
-    if (!shouldRun(exp, args)) {
-      exp.control.apply(ctx, args.concat(finish));
-      return;
+    if (!shouldRun(_exp, args)) {
+      return _exp.control.apply(ctx, args.concat(finish));
     }
 
-    let options = {trial, ctx, metadata: exp._metadata};
+    let options = {trial, ctx, metadata: _exp._metadata};
 
     let controlOptions = assign({
-      fn: exp.control,
+      fn: _exp.control,
       which: "control",
       args: args
     }, options);
 
-    let candidateArgs = exp._beforeRun(args);
+    let candidateArgs = _exp._beforeRun(args);
 
     assert(Array.isArray(candidateArgs), "beforeRun function must return an array.");
 
     let candidateOptions = assign({
-      fn: exp.candidate,
+      fn: _exp.candidate,
       which: "candidate",
       args: candidateArgs
     }, options);
 
     async.map([controlOptions, candidateOptions], makeAsyncObservation, function (_, results) {
       let args = results[0];
-      exp._report(exp._clean(trial));
+      _exp._report(_exp._clean(trial));
       finish(...args);
     });
   }
 
-  assign(result, exp.control);
+  assign(experiment, _exp.control);
 
-  return result;
+  return experiment;
 }
 
 function makeAsyncObservation (options, cb) {
