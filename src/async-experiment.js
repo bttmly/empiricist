@@ -25,8 +25,8 @@ function asyncExperimentFactory (name, executor) {
 
   function experiment (...args) {
 
-    const finish = args.pop(),
-    const ctx    = _exp._context || this,
+    const finish = args.pop();
+    const ctx    = _exp._context || this;
     const trial  = {name, id: makeId()};
 
     assert(isFunction(finish), "Last argument must be a callback function");
