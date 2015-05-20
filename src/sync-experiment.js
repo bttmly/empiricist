@@ -1,10 +1,10 @@
-let assert = require("assert");
+const assert = require("assert");
 
-let assign = require("object-assign");
+const assign = require("object-assign");
 
-let Experiment = require("./experiment");
+const Experiment = require("./experiment");
 
-let {
+const {
   isFunction,
   isString,
   shouldRun,
@@ -18,32 +18,32 @@ function syncExperimentFactory (name, executor) {
   assert(isString(name), `'name' argument must be a string, found ${name}`);
   assert(isFunction(executor), `'executor' argument must be a function, found ${executor}`);
 
-  var _exp = new Experiment();
+  const _exp = new Experiment();
   executor.call(_exp, _exp);
 
   assert(isFunction(_exp.control), "Experiment's control function must be set with `e.use()`");
 
   function experiment (...args) {
 
-    let ctx = _exp._context || this;
+    const ctx = _exp._context || this;
 
     if (!shouldRun(_exp, args)) {
       return _exp.control.apply(ctx, args);
     }
 
-    let options = {ctx, metadata: _exp._metadata};
+    const options = {ctx, metadata: _exp._metadata};
 
-    let controlOptions = assign({
+    const controlOptions = assign({
       fn: _exp.control,
       which: "control",
       args: args
     }, options);
 
-    let candidateArgs = _exp._beforeRun(args);
+    const candidateArgs = _exp._beforeRun(args);
 
     assert(Array.isArray(candidateArgs), "beforeRun function must return an array.");
 
-    let candidateOptions = assign({
+    const candidateOptions = assign({
       fn: _exp.candidate,
       which: "candidate",
       args: candidateArgs
@@ -55,7 +55,7 @@ function syncExperimentFactory (name, executor) {
       true;
     }
 
-    let trial = {
+    const trial = {
       name: name,
       id: makeId(),
       control: makeSyncObservation(controlOptions),
@@ -75,9 +75,9 @@ function syncExperimentFactory (name, executor) {
 }
 
 function makeSyncObservation (options) {
-  let {args, fn, which, metadata, ctx, construct} = options
+  const {args, fn, which, metadata, ctx, construct} = options
 
-  let start = Date.now(),
+  const start = Date.now(),
       observation = {args, metadata, type: which};
 
   if (which === "candidate") {
@@ -113,8 +113,8 @@ function makeSyncObservation (options) {
 // that constructors aren't supported.
 
 function swapPrototypes (experiment, control) {
-  var orig = control.prototype;
-  var derived = Object.create(orig);
+  const orig = control.prototype;
+  const derived = Object.create(orig);
   experiment.prototype = orig;
   control.prototype = derived;
 }

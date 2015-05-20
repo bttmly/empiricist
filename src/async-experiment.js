@@ -1,12 +1,12 @@
-let assert = require("assert");
-let domain = require("domain");
+const assert = require("assert");
+const domain = require("domain");
 
-let async = require("async");
-let assign = require("object-assign");
+const async = require("async");
+const assign = require("object-assign");
 
-let Experiment = require("./experiment");
+const Experiment = require("./experiment");
 
-let {
+const {
   makeId,
   shouldRun,
   isFunction,
@@ -18,14 +18,14 @@ function asyncExperimentFactory (name, executor) {
   assert(isString(name), `'name' argument must be a string, found ${name}`);
   assert(isFunction(executor), `'executor' argument must be a function, found ${executor}`);
 
-  var _exp = new Experiment();
+  const _exp = new Experiment();
   executor.call(_exp, _exp);
 
   assert(isFunction(_exp.control), "Experiment's control function must be set with `e.use()`");
 
   function experiment (...args) {
 
-    let finish = args.pop(),
+    const finish = args.pop(),
         ctx    = _exp._context || this,
         trial  = {name, id: makeId()};
 
@@ -35,26 +35,26 @@ function asyncExperimentFactory (name, executor) {
       return _exp.control.apply(ctx, args.concat(finish));
     }
 
-    let options = {trial, ctx, metadata: _exp._metadata};
+    const options = {trial, ctx, metadata: _exp._metadata};
 
-    let controlOptions = assign({
+    const controlOptions = assign({
       fn: _exp.control,
       which: "control",
       args: args
     }, options);
 
-    let candidateArgs = _exp._beforeRun(args);
+    const candidateArgs = _exp._beforeRun(args);
 
     assert(Array.isArray(candidateArgs), "beforeRun function must return an array.");
 
-    let candidateOptions = assign({
+    const candidateOptions = assign({
       fn: _exp.candidate,
       which: "candidate",
       args: candidateArgs
     }, options);
 
     async.map([controlOptions, candidateOptions], makeAsyncObservation, function (_, results) {
-      let args = results[0];
+      const args = results[0];
       _exp._report(_exp._clean(trial));
       finish(...args);
     });
@@ -66,11 +66,12 @@ function asyncExperimentFactory (name, executor) {
 }
 
 function makeAsyncObservation (options, cb) {
-  let {fn, trial, ctx, args, metadata, which} = options;
+  const {fn, trial, ctx, args, metadata, which} = options;
 
-  let start = Date.now(),
-      observation = {args, metadata},
-      d;
+  const start = Date.now(),
+      observation = {args, metadata};
+
+  let d;
 
   function next (...cbArgs) {
     if (d) d.exit();
