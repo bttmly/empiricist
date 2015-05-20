@@ -1,8 +1,8 @@
-let assert = require("assert");
+const assert = require("assert");
 
-let assign = require("object-assign");
+const assign = require("object-assign");
 
-let {isFunction} = require("./util");
+const {isFunction} = require("./util");
 
 function noop () {}
 function id (x) { return x; }
