@@ -3,6 +3,7 @@ const assert = require("assert");
 const assign = require("object-assign");
 
 const Experiment = require("./experiment");
+const {createOptions} = require("./shared");
 
 const {
   isFunction,
@@ -18,7 +19,7 @@ function syncExperimentFactory (name, executor) {
   assert(isString(name), `'name' argument must be a string, found ${name}`);
   assert(isFunction(executor), `'executor' argument must be a function, found ${executor}`);
 
-  const _exp = new Experiment();
+  const _exp = new Experiment(name);
   executor.call(_exp, _exp);
 
   assert(isFunction(_exp.control), "Experiment's control function must be set with `e.use()`");
@@ -31,23 +32,7 @@ function syncExperimentFactory (name, executor) {
       return _exp.control.apply(ctx, args);
     }
 
-    const options = {ctx, metadata: _exp._metadata};
-
-    const controlOptions = assign({
-      fn: _exp.control,
-      which: "control",
-      args: args
-    }, options);
-
-    const candidateArgs = _exp._beforeRun(args);
-
-    assert(Array.isArray(candidateArgs), "beforeRun function must return an array.");
-
-    const candidateOptions = assign({
-      fn: _exp.candidate,
-      which: "candidate",
-      args: candidateArgs
-    }, options);
+    const {controlOptions, candidateOptions} = createOptions(_exp, args, ctx);
 
     if (this instanceof experiment) {
       candidateOptions.construct =
@@ -76,9 +61,8 @@ function syncExperimentFactory (name, executor) {
 
 function makeSyncObservation (options) {
   const {args, fn, which, metadata, ctx, construct} = options
-
-  const start = Date.now(),
-      observation = {args, metadata, type: which};
+  const observation = {args, metadata, type: which};
+  const start = Date.now();
 
   if (which === "candidate") {
     try {

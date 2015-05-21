@@ -10,8 +10,9 @@ function yes () { return true; }
 
 class Experiment {
 
-  constructor () {
+  constructor (name) {
     assign(this, {
+      name: name,
       _context: null,
       _metadata: {},
       _clean: id,

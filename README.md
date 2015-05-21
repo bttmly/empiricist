@@ -168,6 +168,42 @@ var exp = experiment("with-writes", function (e) {
 
 ```
 
+Say we're persisting auth sessions in MongoDB, but we want to move to Redis. Obviously, verifying users is a critical part of the app.
+
+(This is only the read side. A complimentary write side would need to be added to populate Redis.)
+
+```js
+var asyncExperiment = require("empiricist").asyncExperiment;
+
+function redisAuthMiddleware (user, cb) {
+  redis.get(user.session, function (err, result) {
+    if (err) return cb(err);
+    if (result == null) return cb(new Error("Unauthenticated."));
+    cb();
+  });
+}
+
+function mongoAuthMiddleware = function (user, cb) {
+  var oid = BSON.ObjectID.createFromHexString(user.id);
+  db.collection("sessions").findOne({_id: oid}, function (err, result) {
+    if (err) return cb(err);
+    if (result == null) return cb(new Error("Unauthenticated."));
+    cb();
+  });
+}
+
+var checkPermissions = asyncExperiment("permissions", function (e) {
+  e.use(mongoAuthMiddleware);
+  e.try(redisAuthMiddleware);
+});
+
+app.use("/", function (req, res, next) {
+  checkPermissions(req.user, next);
+});
+```
+
+
+
 To do:
 
 - [ ] Increased safety features in executor. Call-at-most-once / call-exactly-once semantics for some methods like `use` and `try` might be nice.

@@ -54,9 +54,9 @@ function asyncExperimentFactory (name, executor) {
     }, options);
 
     async.map([controlOptions, candidateOptions], makeAsyncObservation, function (_, results) {
-      const args = results[0];
+      const controlCallbackArgs = results[0];
       _exp._report(_exp._clean(trial));
-      finish(...args);
+      finish(...controlCallbackArgs);
     });
   }
 
