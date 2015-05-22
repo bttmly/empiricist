@@ -1,7 +1,26 @@
+const {createOptions, createExperiment} = require("./shared");
 
-function promiseExperimentFactory (name, executor) {
-  assert(isString(name), `'name' argument must be a string, found ${name}`);
-  assert(isFunction(executor), `'executor' argument must be a function, found ${executor}`);
+function wrapPromiseExperiment (_exp) {
+  const trial  = {name: _exp.name, id: makeId()};
+  const ctx    = _exp._context || this;
+
+  function experiment (...args) {
+
+    if (!shouldRun(_exp, args)) {
+      return _exp.control.apply(ctx, args);
+    }
+
+    const {controlOptions, candidateOptions} = createOptions(_exp, args, ctx);
+    const promises = [controlOptions, candidateOptions].map(makePromiseObservation);
+
+    return Promise.all(promises).then(function (observations) {
+      trial.control = observations[0];
+      trial.candidate = observations[1];
+      _exp._report(_exp._clean(trial));
+      return trial.control.returned
+    });
+
+  }
 
 }
 
@@ -14,17 +33,16 @@ function makePromiseObservation (options) {
   function onSuccess (d) {
     observation.returned = d;
     observation.duration = Date.now() - start;
-    return Promise.resolve(d);
+    return Promise.resolve(observation);
   }
 
   function onError (e) {
     observation.error = e;
     observation.duration = Date.now() - start;
-    if (which === "candidate") {
-      return Promise.resolve(null);
-    }
-    return Promise.reject(e);
+    return Promise.resolve(observation);
   }
 
-  observation.promise = fn.apply(ctx, args).then(onSuccess, onError);
+  return fn.apply(ctx, args).then(onSuccess, onError);
 }
+
+module.exports = createExperiment(wrapPromiseExperiment);

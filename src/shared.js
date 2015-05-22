@@ -2,6 +2,27 @@ const assert = require("assert");
 
 const assign = require("object-assign");
 
+const Experiment = require("./experiment");
+const {isFunction, isString} = require("./util");
+
+function createExperiment (wrapper) {
+
+  return function (name, executor) {
+
+    assert(isString(name), `'name' argument must be a string, found ${name}`);
+    assert(isFunction(executor), `'executor' argument must be a function, found ${executor}`);
+
+    const experiment = new Experiment(name);
+
+    executor.call(experiment, experiment);
+
+    assert(isFunction(experiment.control), "Experiment's control function must be set with `e.use()`");
+
+    return wrapper(experiment);
+  };
+
+}
+
 function createOptions (experiment, args, ctx) {
 
   const options = {
@@ -51,5 +72,6 @@ function safeCandidateCall (experiment, method, args) {
 
 
 module.exports = {
-  createOptions
+  createOptions,
+  createExperiment
 }

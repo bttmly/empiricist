@@ -3,30 +3,15 @@ const assert = require("assert");
 const assign = require("object-assign");
 
 const Experiment = require("./experiment");
-const {createOptions} = require("./shared");
+const {createOptions, createExperiment} = require("./shared");
+const {shouldRun, makeId} = require("./util");
 
-const {
-  isFunction,
-  isString,
-  shouldRun,
-  makeId
-} = require("./util");
+function wrapSyncExperiment (_exp) {
 
-
-
-function syncExperimentFactory (name, executor) {
-
-  assert(isString(name), `'name' argument must be a string, found ${name}`);
-  assert(isFunction(executor), `'executor' argument must be a function, found ${executor}`);
-
-  const _exp = new Experiment(name);
-  executor.call(_exp, _exp);
-
-  assert(isFunction(_exp.control), "Experiment's control function must be set with `e.use()`");
-
-  function experiment (...args) {
+  function func (...args) {
 
     const ctx = _exp._context || this;
+    const trial = {name: _exp.name, id: makeId()}
 
     if (!shouldRun(_exp, args)) {
       return _exp.control.apply(ctx, args);
@@ -34,33 +19,28 @@ function syncExperimentFactory (name, executor) {
 
     const {controlOptions, candidateOptions} = createOptions(_exp, args, ctx);
 
-    if (this instanceof experiment) {
+    if (this instanceof func) {
       candidateOptions.construct =
       controlOptions.construct =
       true;
     }
 
-    const trial = {
-      name: name,
-      id: makeId(),
-      control: makeSyncObservation(controlOptions),
-      candidate: makeSyncObservation(candidateOptions)
-    };
+    trial.control = makeSyncObservation(controlOptions),
+    trial.candidate = makeSyncObservation(candidateOptions)
 
     _exp._report(_exp._clean(trial));
-
     return trial.control.returned;
   };
 
   // now make the returned function look superficially like the control...
-  assign(experiment, _exp.control);
-  swapPrototypes(experiment, _exp.control);
+  assign(func, _exp.control);
+  swapPrototypes(func, _exp.control);
 
-  return experiment;
+  return func;
 }
 
 function makeSyncObservation (options) {
-  const {args, fn, which, metadata, ctx, construct} = options
+  const {fn, ctx, args, metadata, which, construct} = options
   const observation = {args, metadata, type: which};
   const start = Date.now();
 
@@ -103,4 +83,4 @@ function swapPrototypes (experiment, control) {
   control.prototype = derived;
 }
 
-module.exports = syncExperimentFactory;
+module.exports = createExperiment(wrapSyncExperiment);
