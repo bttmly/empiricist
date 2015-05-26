@@ -3,7 +3,7 @@ const assert = require("assert");
 const assign = require("object-assign");
 
 const Experiment = require("./experiment");
-const {isFunction, isString} = require("./util");
+const {isFunction, isString} = require("util");
 
 function createExperiment (wrapper) {
 

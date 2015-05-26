@@ -1,17 +1,12 @@
 const assert = require("assert");
 const domain = require("domain");
+const {isFunction, isString} = require("util");
 
 const async = require("async");
 const assign = require("object-assign");
 
 const {createOptions, createExperiment} = require("./shared");
-
-const {
-  makeId,
-  shouldRun,
-  isFunction,
-  isString
-} = require("./util");
+const {makeId, shouldRun} = require("./pkg-util");
 
 function wrapAsyncExperiment (_exp) {
 
@@ -39,7 +34,6 @@ function wrapAsyncExperiment (_exp) {
   }
 
   assign(experiment, _exp.control);
-
   return experiment;
 }
 

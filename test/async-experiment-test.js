@@ -38,23 +38,24 @@ describe("asyncExperiment 'factory'", function () {
 
     it("it handles thrown errors in candidate callbacks", function (done) {
 
-      let trials = [];
-      let exp;
+      let trial, exp;
 
       let fn = asyncExperiment("test", function (ex) {
         ex.use(callbackWithTrue)
           .try(throwInCallback)
-          .report((x) => trials.push(x));
+          .report((x) => trial = x);
         exp = ex;
       });
 
-      fn(function (_, x) {
+      fn(function (err, result) {
 
-        expect(x).to.equal(true);
-        expect(trials[0].candidate.threw.message).to.equal("Thrown in callback");
-        delete trials[0].candidate.threw;
+        expect(err).to.not.exist;
+        expect(result).to.equal(true);
 
-        expect(omitNonDeterministic(trials[0])).to.deep.equal({
+        expect(trial.candidate.threw.message).to.equal("Thrown in callback");
+        delete trial.candidate.threw;
+
+        expect(omitNonDeterministic(trial)).to.deep.equal({
           name: "test",
           control: {
             args: [],
@@ -74,21 +75,22 @@ describe("asyncExperiment 'factory'", function () {
 
     it("it handles candidate calling back with errors", function (done) {
 
-      let trials = [];
-      let exp;
+      let trial, exp;
 
       let fn = asyncExperiment("test", function (ex) {
         ex.use(callbackWithTrue)
           .try(callbackWithError)
-          .report((x) => trials.push(x));
+          .report((x) => trial = x);
 
         exp = ex;
       });
 
-      fn(function (_, x) {
-        expect(x).to.equal(true);
+      fn(function (err, result) {
 
-        expect(omitNonDeterministic(trials[0])).to.deep.equal({
+        expect(err).to.not.exist;
+        expect(result).to.equal(true);
+
+        expect(omitNonDeterministic(trial)).to.deep.equal({
           name: "test",
           control: {
             args: [],

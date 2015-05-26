@@ -80,6 +80,7 @@ describe("syncExperiment 'constructor'", function () {
     expect(bev.hot).to.equal(true);
     expect(bev.caffeine).to.equal(5);
     expect(bev instanceof BeverageExperiment).to.equal(true);
+    expect(bev instanceof Coffee).to.equal(true);
 
   });
 

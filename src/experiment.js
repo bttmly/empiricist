@@ -2,7 +2,7 @@ const assert = require("assert");
 
 const assign = require("object-assign");
 
-const {isFunction} = require("./util");
+const {isFunction, isObject} = require("util");
 
 function noop () {}
 function id (x) { return x; }
@@ -59,6 +59,7 @@ class Experiment {
   }
 
   metadata (obj) {
+    assert(isObject(obj), "`metadata` requires an object argument.");
     assign(this._metadata, obj);
     return this;
   }

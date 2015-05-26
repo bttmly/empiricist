@@ -1,4 +1,5 @@
 const {createOptions, createExperiment} = require("./shared");
+const {isThennable} = require("./pkg-util");
 
 function wrapPromiseExperiment (_exp) {
   const trial  = {name: _exp.name, id: makeId()};
@@ -21,6 +22,9 @@ function wrapPromiseExperiment (_exp) {
     });
 
   }
+
+  assign(experiment, _exp.control);
+  return experiment;
 
 }
 

@@ -4,7 +4,7 @@ const assign = require("object-assign");
 
 const Experiment = require("./experiment");
 const {createOptions, createExperiment} = require("./shared");
-const {shouldRun, makeId} = require("./util");
+const {shouldRun, makeId} = require("./pkg-util");
 
 function wrapSyncExperiment (_exp) {
 
