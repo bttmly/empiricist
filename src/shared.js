@@ -1,13 +1,15 @@
 const assert = require("assert");
+const {isFunction, isString} = require("util");
 
 const assign = require("object-assign");
 
-const Experiment = require("./experiment-redux");
-const {isFunction, isString} = require("util");
+const Experiment = require("./experiment");
 
 function createExperimentFactory (wrapper, Ctor) {
 
-  Ctor = Ctor || Experiment
+  Ctor = Ctor || Experiment;
+
+  assertClassImplementsExperiment(Ctor);
 
   return function (name, executor) {
 
@@ -25,30 +27,30 @@ function createExperimentFactory (wrapper, Ctor) {
 
 }
 
-function createOptions (experiment, args, ctx) {
+function createOptions (exp, args, ctx) {
 
   const options = {
     ctx: ctx,
-    metadata: experiment._metadata,
+    metadata: exp._metadata,
   };
 
   const controlOptions = assign({
-    fn: experiment.control,
+    fn: exp.control,
     which: "control",
     args: args
   }, options);
 
-  const candidateArgs = safeCandidateCall(experiment, "beforeRun", args);
+  const candidateArgs = exp.beforeRun(args);
 
   assert(Array.isArray(candidateArgs), "beforeRun function must return an array.");
 
   const candidateOptions = assign({
-    fn: experiment.candidate,
+    fn: exp.candidate,
     which: "candidate",
     args: candidateArgs
   }, options);
 
-  return {controlOptions, candidateOptions}
+  return {controlOptions, candidateOptions};
 
 }
 
@@ -72,6 +74,12 @@ function safeCandidateCall (experiment, method, args) {
 
 }
 
+function assertClassImplementsExperiment (ClassConstructor) {
+  assert(isFunction(ClassConstructor));
+  Object.getOwnPropertyNames(Experiment.prototype).forEach((m) => {
+    assert(isFunction(ClassConstructor.prototype[m]));
+  });
+}
 
 module.exports = {
   createOptions,

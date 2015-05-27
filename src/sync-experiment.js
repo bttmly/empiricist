@@ -2,22 +2,21 @@ const assert = require("assert");
 
 const assign = require("object-assign");
 
-const Experiment = require("./experiment-redux");
 const {createOptions, createExperimentFactory} = require("./shared");
 const {shouldRun, makeId} = require("./pkg-util");
 
-function wrapSyncExperiment (_exp) {
+function wrapSyncExperiment (exp) {
 
   function func (...args) {
 
-    const ctx = _exp.context || this;
-    const trial = {name: _exp.name, id: makeId()}
+    const ctx = exp.context || this;
+    const trial = {name: exp.name, id: makeId()}
 
-    if (!_exp.enabled(...args)) {
-      return _exp.control.apply(ctx, args);
+    if (!exp.enabled(...args)) {
+      return exp.control.apply(ctx, args);
     }
 
-    const {controlOptions, candidateOptions} = createOptions(_exp, args, ctx);
+    const {controlOptions, candidateOptions} = createOptions(exp, args, ctx);
 
     if (this instanceof func) {
       candidateOptions.construct =
@@ -28,13 +27,13 @@ function wrapSyncExperiment (_exp) {
     trial.control = makeSyncObservation(controlOptions),
     trial.candidate = makeSyncObservation(candidateOptions)
 
-    _exp.report(_exp.clean(trial));
+    exp.report(exp.clean(trial));
     return trial.control.returned;
   }
 
   // now make the returned function look superficially like the control...
-  assign(func, _exp.control);
-  swapPrototypes(func, _exp.control);
+  assign(func, exp.control);
+  swapPrototypes(func, exp.control);
 
   return func;
 }

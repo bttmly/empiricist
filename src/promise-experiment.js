@@ -1,29 +1,29 @@
 const {createOptions, createExperimentFactory} = require("./shared");
 const {isThennable} = require("./pkg-util");
 
-function wrapPromiseExperiment (_exp) {
-  const trial  = {name: _exp.name, id: makeId()};
-  const ctx    = _exp._context || this;
+function wrapPromiseExperiment (exp) {
+  const trial  = {name: exp.name, id: makeId()};
+  const ctx    = exp._context || this;
 
   function experiment (...args) {
 
-    if (!shouldRun(_exp, args)) {
-      return _exp.control.apply(ctx, args);
+    if (!exp.enabled(args)) {
+      return exp.control.apply(ctx, args);
     }
 
-    const {controlOptions, candidateOptions} = createOptions(_exp, args, ctx);
+    const {controlOptions, candidateOptions} = createOptions(exp, args, ctx);
     const promises = [controlOptions, candidateOptions].map(makePromiseObservation);
 
     return Promise.all(promises).then(function (observations) {
       trial.control = observations[0];
       trial.candidate = observations[1];
-      _exp._report(_exp._clean(trial));
+      exp._report(exp._clean(trial));
       return trial.control.returned
     });
 
   }
 
-  assign(experiment, _exp.control);
+  assign(experiment, exp.control);
   return experiment;
 
 }

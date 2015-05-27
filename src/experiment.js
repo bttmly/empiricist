@@ -4,22 +4,29 @@ const assign = require("object-assign");
 
 const {isFunction, isObject} = require("util");
 
+function isMaybeFunction (maybeFn) {
+  return maybeFn == null || isFunction(maybeFn);
+}
+
 function noop () {}
 function id (x) { return x; }
 function yes () { return true; }
 
 class Experiment {
 
+  static assertValid (e) {
+    assert(isFunction(e.clean));
+    assert(isFunction(e.report));
+    assert(isFunction(e.control));
+    assert(isFunction(e.enabled));
+    assert(isFunction(e.beforeRun));
+    assert(isMaybeFunction(e.candidate));
+  }
+
   constructor (name) {
-    assign(this, {
-      name: name,
-      _context: null,
-      _metadata: {},
-      _clean: id,
-      _beforeRun: id,
-      _report: noop,
-      _enabled: yes
-    });
+    this.name = name;
+    this._metadata = {};
+    this._context = null;
   }
 
   use (fn) {
@@ -34,41 +41,31 @@ class Experiment {
     return this;
   }
 
-  enabled (fn) {
-    assert(isFunction(fn), "`enabled` requires a function argument.");
-    this._enabled = fn;
+  enabled () {
+    return this.hasOwnProperty("candidate");
+  }
+
+  report () {}
+
+  clean (observation) {
+    return observation;
+  }
+
+  beforeRun (args) {
+    return args;
+  }
+
+  setMetadata (metadata) {
+    assert(isObject(metadata), "`setMetadata` requires an object argument");
+    this._metadata = metadata;
     return this;
   }
 
-  report (fn) {
-    assert(isFunction(fn), "`report` requires a function argument.");
-    this._report = fn;
+  setContext (context) {
+    this._context = context;
     return this;
   }
 
-  clean (fn) {
-    assert(isFunction(fn), "`clean` requires a function argument.");
-    this._clean = fn;
-    return this;
-  }
-
-  beforeRun (fn) {
-    assert(isFunction(fn), "`beforeRun` requires a function argument.");
-    this._beforeRun = fn;
-    return this;
-  }
-
-  metadata (obj) {
-    assert(isObject(obj), "`metadata` requires an object argument.");
-    assign(this._metadata, obj);
-    return this;
-  }
-
-  context (ctx) {
-    this._context = ctx;
-    return this;
-  }
-
-};
+}
 
 module.exports = Experiment
