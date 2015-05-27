@@ -24,33 +24,68 @@ Here, `experimentalAdd` behaves like `add`. However, when called, it also runs t
 
 `empiricist` contains experiment "factories", one for synchronous functions and one for asynchronous ones. These factories are implemented using the [revealing constructor pattern](https://blog.domenic.me/the-revealing-constructor-pattern/). This enables a degree of extensibility while also providing certain confirguation and privacy guarantees.
 
-```coffeescript
-{syncExperiment} = require "empiricist"
+Calls to `syncExperiment` and `asyncExperiment` return functions (since they are intended to wrap functions), but during initialization an underlying `Experiment` class instance is exposed to the executor to allow the caller to configure the experiment, while leaving the returned experiment function as externally similar to the control function as possible. This helps ensure calling code cannot become coupled to a hypothetical experiment interface.
 
-experimentalAdd = syncExperiment "test", ->
-  @use (a, b) -> a + b
-  @try (a, b) -> a * b
+### Experiment Factories
 
-experimentalAdd 2, 3 # returns 5
+Empiricst provides "factories" to create experiments.
+
+```js
+// let's compare two functions that read JSON files into objects
+
+var fs = require("fs");
+var syncExperiment = require("empiricist").syncExperiment;
+
+function unsafeReadJson (path, cb) {
+  fs.readFile(path, function (err, buf) {
+    if (err) return cb(err);
+    return cb(null, JSON.parse(buf.toString()));
+  });
+}
+
+function safeReadJson (path, cb) {
+  fs.readFile(path, function (err, buf) {
+    if (err) return cb(err);
+
+    var data;
+
+    try {
+      data = JSON.parse(buf.toString());
+    } catch (e) {
+      return cb(new Error("Error parsing JSON from " + path));
+    }
+
+    return cb(null, data);
+
+  })
+}
+
+var readJson = experiment("read json", function (e) {
+  e.use(unsafeReadJson);
+  e.try(safeReadJson);
+});
+
+
 ```
 
-`epiricist` uses the . Calls to `syncExperiment` and `asyncExperiment` return functions (since they wrap functions), but during initialization an underlying `Experiment` object is exposed to the executor to allow the caller to configure the experiment, while leaving the returned experiment function as externally similar to the control function as possible. This helps ensure calling code cannot become coupled to a hypothetical experiment interface.
-
-### Top Level Namespace
-
-#### `syncExperiment(String name, Function<Experiment exp> executor) -> Function`
+##### `syncExperiment(String name, Function<Experiment exp> executor) -> Function`
 
 Creats an experiment wrapping a synchronous 'control' function.
 
-#### `asyncExperiment(String name, Function<Experiment exp> executor) -> Function`
+##### `asyncExperiment(String name, Function<Experiment exp> executor) -> Function`
 
-Creates an experiment wrapping an asychronous 'control' function.
+Creates an experiment wrapping an asychronous callback-accepting 'control' function.
 
-#### The Difference
+##### `promiseExperiment(String name, Function<Experiment exp> executor) -> Function`
 
-If you are unfamiliar with the single-threaded, callback-based IO model of Node.js/io.js, the distinction between synchronous and asynchronous functions is crucial. Synchronous functions return values and throw exceptions just as you expect in other languages. In contrast, _asynchronous_ functions don't (generally) return or throw _anything_. Instead, they receive a callback function as their final argument, and when whatever IO they are performing finishes, they provide an error or result to the callback as arguments. When using `empiricist` it is important to wrap a function with the appropriate factory for the type of control function you are using.
+Creates an experiment wrapping a promise-returning 'control' function.
 
-#### `new Experiment()`
+##### Using the Right Factory
+
+If you are unfamiliar with the single-threaded, callback-based IO model of Node.js/io.js, the distinction between synchronous and asynchronous functions is crucial. Synchronous functions return values and throw exceptions just as you expect in other languages. In contrast, _asynchronous_ functions don't (generally) return or throw _anything_. Instead, they receive a callback function as their final argument, and when whatever I/O they are performing finishes, they provide an error or result to the callback as arguments. When using `empiricist` it is important to wrap a function with the appropriate factory for the type of control function you are using.
+
+For most use cases where Empiricist is useful, `asyncExperiment` is the correct choice. This is because pure, synchronous functions are much easier to profile, unit test, and replace than complex, multi-step asynchronous I/O operations. They're also more likely to need careful testing under production load, as unit-testing them often requires fixtures and mocks that can easily miss corner cases.
+
 
 Creates a bare experiment instance. This constructor is exported primarily to enable subclassing and injection (which has not yet been implemented).
 
@@ -60,13 +95,26 @@ During initialization, experiment factories expose an underlying `Experiment` in
 
 **Important**: This object is available within the executor, it is not returned from the function call to `syncExperiment` or `asyncExperiment`. Those functions return normal JavaScript function objects that behave like the configured control function.
 
-#### `.use(Function control) -> Experiment`
+#### Class Instantiation
+
+##### `new Experiment(String name)`
+
+Bare `Experiment` instances should generally not be used. Factories serve two purposes:
+
+1.) Create the experiment object, and provide it to the initializer function.
+2.) Hold the experiment object in closure scope so it cannot be altered after instnatiation.
+
+However, the `Experiment` class is exported to allow for subclassing. Subclassing Experiments goes hand-in-hand with a higher order experiment factory factory, which is also provided (I realize this sounds Java-esque).
+
+#### Instance Methods
+
+##### `.use(Function control) -> Experiment`
 `use` sets the 'control behavior' of an experiment. This should be the original function that is being refactored or replaced. This method must be called properly in the executor or an exception will be thrown.
 
-#### `.try(Function candidate) -> Experiment`
+##### `.try(Function candidate) -> Experiment`
 `try` sets the 'candidate behavior' of an experiment. This should be the function that is being developed to replace the 'control behavior'.
 
-#### `.enabled(Function<Array args> isEnabled) -> Experiment`
+##### `.enabled(Function<Array args> isEnabled) -> Experiment`
 `enabled` sets the experiment's internal function that decides whether or not the candidate function should run. For instance, to run the candidate 1% of the time, one might do:
 
 ```js
@@ -75,19 +123,19 @@ exp.enabled(function () { return Math.random() < 0.01; });
 
 The enabled function is called with the original calling arguments. 
 
-#### `.report(Function reporter) -> Experiment`
+##### `.report(Function reporter) -> Experiment`
 
 Expected signature of `reporter` argument:
 
 `reporter(Object observation) -> Undefined`
 
-#### `.clean(Function cleaner) -> Experiment`
+##### `.clean(Function cleaner) -> Experiment`
 
 Expected signature of `cleaner` argument:
 
 `cleaner(Object observation) -> Object`
 
-#### `.beforeRun(Function<Array args> setup) -> Experiment`
+##### `.beforeRun(Function<Array args> setup) -> Experiment`
 
 `setup` must return an `Array`.
 
