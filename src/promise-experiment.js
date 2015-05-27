@@ -1,4 +1,4 @@
-const {createOptions, createExperiment} = require("./shared");
+const {createOptions, createExperimentFactory} = require("./shared");
 const {isThennable} = require("./pkg-util");
 
 function wrapPromiseExperiment (_exp) {
@@ -49,4 +49,4 @@ function makePromiseObservation (options) {
   return fn.apply(ctx, args).then(onSuccess, onError);
 }
 
-module.exports = createExperiment(wrapPromiseExperiment);
+module.exports = createExperimentFactory(wrapPromiseExperiment);

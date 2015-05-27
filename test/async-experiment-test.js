@@ -6,7 +6,6 @@ let sinon = require("sinon");
 
 let asyncExperiment = require("../src/async-experiment");
 let syncExperiment = require("../src/sync-experiment");
-let Experiment = require("../src/experiment");
 
 let {omitNonDeterministic} = require("./helpers");
 
@@ -41,9 +40,8 @@ describe("asyncExperiment 'factory'", function () {
       let trial, exp;
 
       let fn = asyncExperiment("test", function (ex) {
-        ex.use(callbackWithTrue)
-          .try(throwInCallback)
-          .report((x) => trial = x);
+        ex.use(callbackWithTrue).try(throwInCallback);
+        ex.report = (x) => trial = x
         exp = ex;
       });
 
@@ -78,10 +76,8 @@ describe("asyncExperiment 'factory'", function () {
       let trial, exp;
 
       let fn = asyncExperiment("test", function (ex) {
-        ex.use(callbackWithTrue)
-          .try(callbackWithError)
-          .report((x) => trial = x);
-
+        ex.use(callbackWithTrue).try(callbackWithError)
+        ex.report = (x) => trial = x
         exp = ex;
       });
 

@@ -2,21 +2,23 @@ const assert = require("assert");
 
 const assign = require("object-assign");
 
-const Experiment = require("./experiment");
+const Experiment = require("./experiment-redux");
 const {isFunction, isString} = require("util");
 
-function createExperiment (wrapper) {
+function createExperimentFactory (wrapper, Ctor) {
+
+  Ctor = Ctor || Experiment
 
   return function (name, executor) {
 
     assert(isString(name), `'name' argument must be a string, found ${name}`);
     assert(isFunction(executor), `'executor' argument must be a function, found ${executor}`);
 
-    const experiment = new Experiment(name);
+    const experiment = new Ctor(name);
 
     executor.call(experiment, experiment);
 
-    assert(isFunction(experiment.control), "Experiment's control function must be set with `e.use()`");
+    Ctor.assertValid(experiment);
 
     return wrapper(experiment);
   };
@@ -36,7 +38,7 @@ function createOptions (experiment, args, ctx) {
     args: args
   }, options);
 
-  const candidateArgs = safeCandidateCall(experiment, "_beforeRun", args);
+  const candidateArgs = safeCandidateCall(experiment, "beforeRun", args);
 
   assert(Array.isArray(candidateArgs), "beforeRun function must return an array.");
 
@@ -73,5 +75,5 @@ function safeCandidateCall (experiment, method, args) {
 
 module.exports = {
   createOptions,
-  createExperiment
+  createExperimentFactory
 }
