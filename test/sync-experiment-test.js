@@ -4,8 +4,8 @@ let _ = require("lodash");
 let expect = require("chai").expect;
 let sinon = require("sinon");
 
-let syncExperiment = require("../src/sync-experiment");
-let Experiment = require("../src/experiment");
+let syncExperiment = require("../lib/sync-experiment");
+let Experiment = require("../lib/experiment");
 
 
 let {omitNonDeterministic} = require("./helpers");
