@@ -70,22 +70,6 @@ function safeMethodCall (experiment, method, ...args) {
   return result;
 }
 
-function safeCandidateCall (experiment, method, args) {
-
-
-  try {
-    result = experiment[method](args);
-  } catch (e) {
-    // users should be able to create handlers for errors
-    // thrown by different kinds of user-configured functions
-    // errors BEFORE candidate invocation should cancel it
-    throw e;
-  }
-
-  return result;
-
-}
-
 function assertClassImplementsExperiment (MaybeExperiment) {
   assert(isFunction(MaybeExperiment));
   Object.getOwnPropertyNames(Experiment.prototype).forEach((m) => {
@@ -95,5 +79,6 @@ function assertClassImplementsExperiment (MaybeExperiment) {
 
 module.exports = {
   createOptions,
-  createExperimentFactory
+  createExperimentFactory,
+  safeMethodCall
 };

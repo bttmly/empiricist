@@ -1,17 +1,11 @@
 const assert = require("assert");
 const {EventEmitter} = require("events");
 
-const assign = require("object-assign");
-
 const {isFunction, isObject} = require("util");
 
 function isMaybeFunction (maybeFn) {
   return maybeFn == null || isFunction(maybeFn);
 }
-
-function noop () {}
-function id (x) { return x; }
-function yes () { return true; }
 
 class Experiment extends EventEmitter {
 
@@ -74,4 +68,4 @@ class Experiment extends EventEmitter {
 
 }
 
-module.exports = Experiment
+module.exports = Experiment;

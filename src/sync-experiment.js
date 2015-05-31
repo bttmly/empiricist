@@ -1,16 +1,14 @@
-const assert = require("assert");
-
 const assign = require("object-assign");
 
 const {createOptions, createExperimentFactory} = require("./shared");
-const {shouldRun, makeId} = require("./pkg-util");
+const {makeId} = require("./pkg-util");
 
 function wrapSyncExperiment (exp) {
 
   function experimentFunc (...args) {
 
     const ctx = exp.context || this;
-    const trial = {name: exp.name, id: makeId()}
+    const trial = {name: exp.name, id: makeId()};
 
     if (!exp.enabled(...args)) {
       return exp.control.apply(ctx, args);
@@ -39,10 +37,11 @@ function wrapSyncExperiment (exp) {
 }
 
 function makeSyncObservation (options) {
-  const {fn, ctx, args, metadata, which, construct} = options
+  const {fn, ctx, args, metadata, which, construct} = options;
   const observation = {args, metadata, type: which};
   const start = Date.now();
 
+  /* eslint-disable new-cap */
   if (which === "candidate") {
     try {
       observation.result = construct ?
@@ -57,6 +56,7 @@ function makeSyncObservation (options) {
       new fn(...args) :
       fn.apply(ctx, args);
   }
+  /* eslint-enable new-cap */
 
   observation.duration = Date.now() - start;
   return observation;

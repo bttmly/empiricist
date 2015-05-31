@@ -10,4 +10,4 @@ rules:
   strict: [2, "never"]
   no-use-before-define: 0
   no-underscore-dangle: 0
-
+  space-after-function-name: [2, "always"]
