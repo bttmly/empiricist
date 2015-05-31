@@ -1,4 +1,5 @@
 const assert = require("assert");
+const {EventEmitter} = require("events");
 
 const assign = require("object-assign");
 
@@ -12,7 +13,7 @@ function noop () {}
 function id (x) { return x; }
 function yes () { return true; }
 
-class Experiment {
+class Experiment extends EventEmitter {
 
   static assertValid (e) {
     assert(isFunction(e.clean));
@@ -24,6 +25,7 @@ class Experiment {
   }
 
   constructor (name) {
+    super();
     this.name = name;
     this._metadata = {};
     this._context = null;
@@ -42,13 +44,17 @@ class Experiment {
   }
 
   enabled () {
-    return this.hasOwnProperty("candidate");
+    return this.hasOwnProperty("candidate") && typeof this.candidate === "function";
   }
 
   report () {}
 
   clean (observation) {
     return observation;
+  }
+
+  match ({control, candidate}) {
+    return control.returned === candidate.returned;
   }
 
   beforeRun (args) {

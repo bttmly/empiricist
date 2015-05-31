@@ -9,10 +9,7 @@ let syncExperiment = require("../src/sync-experiment");
 
 let {omitNonDeterministic} = require("./helpers");
 
-function noop () {}
-
 describe("asyncExperiment 'factory'", function () {
-
 
   describe("error handling", function () {
 
@@ -50,20 +47,22 @@ describe("asyncExperiment 'factory'", function () {
         expect(err).to.not.exist;
         expect(result).to.equal(true);
 
-        expect(trial.candidate.threw.message).to.equal("Thrown in callback");
-        delete trial.candidate.threw;
+        expect(trial.candidate.error).to.exist;
+        expect(trial.candidate.error.message).to.equal("Thrown in callback");
+        delete trial.candidate.error;
 
         expect(omitNonDeterministic(trial)).to.deep.equal({
           name: "test",
           control: {
             args: [],
             metadata: {},
-            cbArgs: [ null, true ]
+            cbArgs: [ null, true ],
+            result: true
           },
           candidate: {
             args: [],
             metadata: {},
-            cbArgs: []
+            cbArgs: [],
           }
         });
 
@@ -91,11 +90,13 @@ describe("asyncExperiment 'factory'", function () {
           control: {
             args: [],
             metadata: {},
-            cbArgs: [ null, true ]
+            cbArgs: [ null, true ],
+            result: true
           },
           candidate: {
             args: [],
             metadata: {},
+            error: new Error("Callback with error"),
             cbArgs: [ new Error("Callback with error") ],
           }
         });

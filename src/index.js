@@ -11,7 +11,6 @@ module.exports = {
     if (typeof Promise === "undefined") {
       throw new Error("Promise experiments require a global promise polyfill.");
     }
-
     return promiseExperiment;
   }
 };

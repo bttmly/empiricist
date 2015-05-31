@@ -79,9 +79,17 @@ describe("syncExperiment 'constructor'", function () {
 
     expect(bev.hot).to.equal(true);
     expect(bev.caffeine).to.equal(5);
-    expect(bev instanceof BeverageExperiment).to.equal(true);
     expect(bev instanceof Coffee).to.equal(true);
 
+    // You should avoid ever exposing both the underlying control function and the
+    // experiment function. However, in the case with `new`, the returned object
+    // is actually constructed by the control function, and so the control function
+    // can be accessed through instance.constructor or reflection (Object.getPrototypeOf)
+    //
+    // We use a wonky trick to ensure that objects returned by new ExperimentalFn()
+    // show up as instanceof ExperimentalFn
+
+    expect(bev instanceof BeverageExperiment).to.equal(true);
   });
 
   describe("executor function invocation", function () {
@@ -264,13 +272,13 @@ describe("instance methods", function () {
           type: "control",
           args: [ 2, 3 ],
           metadata: {},
-          returned: 5,
+          result: 5,
         },
         candidate: {
           type: "candidate",
           args: [ 2, 3 ],
           metadata: {},
-          returned: 6,
+          result: 6,
         }
       });
     });
@@ -287,8 +295,8 @@ describe("instance methods", function () {
       let cleaner = sinon.spy(function (result) {
         return {
           name: result.name,
-          control: result.control.returned,
-          candidate: result.candidate.returned
+          control: result.control.result,
+          candidate: result.candidate.result
         };
       });
 
@@ -310,13 +318,13 @@ describe("instance methods", function () {
           type: "control",
           args: [ 2, 3 ],
           metadata: {},
-          returned: 5,
+          result: 5,
         },
         candidate: {
           type: "candidate",
           args: [ 2, 3 ],
           metadata: {},
-          returned: 6,
+          result: 6,
         }
       });
 

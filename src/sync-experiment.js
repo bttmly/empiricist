@@ -7,7 +7,7 @@ const {shouldRun, makeId} = require("./pkg-util");
 
 function wrapSyncExperiment (exp) {
 
-  function func (...args) {
+  function experimentFunc (...args) {
 
     const ctx = exp.context || this;
     const trial = {name: exp.name, id: makeId()}
@@ -18,24 +18,24 @@ function wrapSyncExperiment (exp) {
 
     const {controlOptions, candidateOptions} = createOptions(exp, args, ctx);
 
-    if (this instanceof func) {
+    if (this instanceof experimentFunc) {
       candidateOptions.construct =
       controlOptions.construct =
       true;
     }
 
-    trial.control = makeSyncObservation(controlOptions),
-    trial.candidate = makeSyncObservation(candidateOptions)
+    trial.control = makeSyncObservation(controlOptions);
+    trial.candidate = makeSyncObservation(candidateOptions);
 
     exp.report(exp.clean(trial));
-    return trial.control.returned;
+    return trial.control.result;
   }
 
   // now make the returned function look superficially like the control...
-  assign(func, exp.control);
-  swapPrototypes(func, exp.control);
+  assign(experimentFunc, exp.control);
+  swapPrototypes(experimentFunc, exp.control);
 
-  return func;
+  return experimentFunc;
 }
 
 function makeSyncObservation (options) {
@@ -45,15 +45,15 @@ function makeSyncObservation (options) {
 
   if (which === "candidate") {
     try {
-      observation.returned = construct ?
+      observation.result = construct ?
         new fn(...args) :
         fn.apply(ctx, args);
     } catch (e) {
-      observation.returned = null;
-      observation.threw = e;
+      observation.result = null;
+      observation.error = e;
     }
   } else {
-    observation.returned = construct ?
+    observation.result = construct ?
       new fn(...args) :
       fn.apply(ctx, args);
   }
@@ -74,6 +74,11 @@ function makeSyncObservation (options) {
 // Alternately, perhaps the caller should ask for it to be performed
 // by configuring something in the executor. Maybe we just document
 // that constructors aren't supported.
+
+
+// ExperimentalMammal = syncExperiment(Mammal);
+// Original hierarchy: Animal -> Mammal
+// New hierarchy: Animal -> ExperimentalMammal -> Mammal
 
 function swapPrototypes (experiment, control) {
   const orig = control.prototype;

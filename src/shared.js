@@ -31,7 +31,7 @@ function createOptions (exp, args, ctx) {
 
   const options = {
     ctx: ctx,
-    metadata: exp._metadata,
+    metadata: exp._metadata
   };
 
   const controlOptions = assign({
@@ -54,12 +54,24 @@ function createOptions (exp, args, ctx) {
 
 }
 
-function safeCandidateCall (experiment, method, args) {
+function safeMethodCall (experiment, method, ...args) {
   if (typeof experiment[method] !== "function") {
-    throw new Error(`Invoked with invalid method ${method}`);
+    throw new Error(`Tried to call invalid method ${method}`);
   }
 
   let result;
+
+  try {
+    result = experiment[method](...args);
+  } catch (e) {
+    experiment.emit(`${method}Error`, e, args);
+  }
+
+  return result;
+}
+
+function safeCandidateCall (experiment, method, args) {
+
 
   try {
     result = experiment[method](args);
@@ -67,21 +79,21 @@ function safeCandidateCall (experiment, method, args) {
     // users should be able to create handlers for errors
     // thrown by different kinds of user-configured functions
     // errors BEFORE candidate invocation should cancel it
-    throw e
+    throw e;
   }
 
   return result;
 
 }
 
-function assertClassImplementsExperiment (ClassConstructor) {
-  assert(isFunction(ClassConstructor));
+function assertClassImplementsExperiment (MaybeExperiment) {
+  assert(isFunction(MaybeExperiment));
   Object.getOwnPropertyNames(Experiment.prototype).forEach((m) => {
-    assert(isFunction(ClassConstructor.prototype[m]));
+    assert(isFunction(MaybeExperiment.prototype[m]));
   });
 }
 
 module.exports = {
   createOptions,
   createExperimentFactory
-}
+};
