@@ -1,5 +1,5 @@
 const assert = require("assert");
-const {isFunction, isString} = require("util");
+const {isFunction, isString} = require("./pkg-util");
 
 const assign = require("object-assign");
 

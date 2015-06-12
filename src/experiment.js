@@ -1,7 +1,7 @@
 const assert = require("assert");
 const {EventEmitter} = require("events");
 
-const {isFunction, isObject} = require("util");
+const {isFunction, isObject} = require("./pkg-util");
 
 function isMaybeFunction (maybeFn) {
   return maybeFn == null || isFunction(maybeFn);
@@ -38,7 +38,7 @@ class Experiment extends EventEmitter {
   }
 
   enabled () {
-    return this.hasOwnProperty("candidate") && typeof this.candidate === "function";
+    return this.hasOwnProperty("candidate") && isFunction(this.candidate);
   }
 
   report () {}

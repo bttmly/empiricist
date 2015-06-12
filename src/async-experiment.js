@@ -1,12 +1,11 @@
 const assert = require("assert");
 const domain = require("domain");
-const {isFunction} = require("util");
 
 const async = require("async");
 const assign = require("object-assign");
 
 const {createOptions, createExperimentFactory} = require("./shared");
-const {makeId} = require("./pkg-util");
+const {makeId, isFunction} = require("./pkg-util");
 
 function wrapAsyncExperiment (exp) {
 

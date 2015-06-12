@@ -1,5 +1,12 @@
-const {isFunction} = require("util");
 const assert = require("assert");
+
+function isFunction (f) {
+  return typeof f === "function";
+}
+
+function isString (s) {
+  return typeof s === "string";
+}
 
 function makeId () {
   return Date.now() + "-" + Math.random().toString(16).slice(2);
@@ -27,5 +34,7 @@ module.exports = {
   makeId,
   assertHasMethods,
   isThennable,
-  isGenerator
+  isGenerator,
+  isFunction,
+  isString
 };
