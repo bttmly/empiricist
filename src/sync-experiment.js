@@ -1,62 +1,47 @@
 const assign = require("object-assign");
 
 const {createOptions, createExperimentFactory} = require("./shared");
-const {makeId} = require("./pkg-util");
+const Trial = require("./trial");
 
 function wrapSyncExperiment (exp) {
 
   function experimentFunc (...args) {
 
     const ctx = exp.context || this;
-    const trial = {name: exp.name, id: makeId()};
 
     if (!exp.enabled(...args)) {
       return exp.control.apply(ctx, args);
     }
 
     const {controlOptions, candidateOptions} = createOptions(exp, args, ctx);
-
-    if (this instanceof experimentFunc) {
-      candidateOptions.construct =
-      controlOptions.construct =
-      true;
-    }
-
-    trial.control = makeSyncObservation(controlOptions);
-    trial.candidate = makeSyncObservation(candidateOptions);
-
-    exp.report(exp.clean(trial));
+    const observations = [makeSyncObservation(controlOptions), makeSyncObservation(candidateOptions)];
+    const trial = new Trial(exp, observations);
+    exp.emitTrial(trial);
     return trial.control.result;
   }
 
   // now make the returned function look superficially like the control...
   assign(experimentFunc, exp.control);
-  swapPrototypes(experimentFunc, exp.control);
+  // swapPrototypes(experimentFunc, exp.control);
 
   return experimentFunc;
 }
 
 function makeSyncObservation (options) {
-  const {fn, ctx, args, metadata, which, construct} = options;
+  const {fn, ctx, args, metadata, which} = options;
   const observation = {args, metadata, type: which};
   const start = Date.now();
 
-  /* eslint-disable new-cap */
   if (which === "candidate") {
     try {
-      observation.result = construct ?
-        new fn(...args) :
-        fn.apply(ctx, args);
+      observation.result = fn.apply(ctx, args);
     } catch (e) {
       observation.result = null;
       observation.error = e;
     }
   } else {
-    observation.result = construct ?
-      new fn(...args) :
-      fn.apply(ctx, args);
+    observation.result = fn.apply(ctx, args);
   }
-  /* eslint-enable new-cap */
 
   observation.duration = Date.now() - start;
   return observation;
@@ -80,11 +65,11 @@ function makeSyncObservation (options) {
 // Original hierarchy: Animal -> Mammal
 // New hierarchy: Animal -> ExperimentalMammal -> Mammal
 
-function swapPrototypes (experiment, control) {
-  const orig = control.prototype;
-  const derived = Object.create(orig);
-  experiment.prototype = orig;
-  control.prototype = derived;
-}
+// function swapPrototypes (experiment, control) {
+//   const orig = control.prototype;
+//   const derived = Object.create(orig);
+//   experiment.prototype = orig;
+//   control.prototype = derived;
+// }
 
 module.exports = createExperimentFactory(wrapSyncExperiment);

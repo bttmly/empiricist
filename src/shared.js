@@ -1,9 +1,11 @@
 const assert = require("assert");
-const {isFunction, isString} = require("./pkg-util");
 
 const assign = require("object-assign");
 
+const {isFunction, isString} = require("./pkg-util");
 const Experiment = require("./experiment");
+
+
 
 function createExperimentFactory (wrapper, Ctor) {
 
@@ -11,7 +13,7 @@ function createExperimentFactory (wrapper, Ctor) {
 
   assertClassImplementsExperiment(Ctor);
 
-  return function (name, executor) {
+  return function experimentFactory (name, executor) {
 
     assert(isString(name), `'name' argument must be a string, found ${name}`);
     assert(isFunction(executor), `'executor' argument must be a function, found ${executor}`);
@@ -26,6 +28,9 @@ function createExperimentFactory (wrapper, Ctor) {
   };
 
 }
+
+
+
 
 function createOptions (exp, args, ctx) {
 
@@ -54,6 +59,9 @@ function createOptions (exp, args, ctx) {
 
 }
 
+
+
+
 function safeMethodCall (experiment, method, ...args) {
   if (typeof experiment[method] !== "function") {
     throw new Error(`Tried to call invalid method ${method}`);
@@ -69,6 +77,9 @@ function safeMethodCall (experiment, method, ...args) {
 
   return result;
 }
+
+
+
 
 function assertClassImplementsExperiment (MaybeExperiment) {
   assert(isFunction(MaybeExperiment));

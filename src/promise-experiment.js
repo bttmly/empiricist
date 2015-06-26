@@ -1,10 +1,9 @@
-const {createOptions, createExperimentFactory} = require("./shared");
-const {makeId} = require("./pkg-util");
-
 const assign = require("object-assign");
 
+const {createOptions, createExperimentFactory} = require("./shared");
+const Trial = require("./trial");
+
 function wrapPromiseExperiment (exp) {
-  const trial = {name: exp.name, id: makeId()};
   const ctx = exp._context || this;
 
   function experimentFunc (...args) {
@@ -18,9 +17,8 @@ function wrapPromiseExperiment (exp) {
 
     // I dont think this currently handles errors in the control properly
     return Promise.all(promises).then(function (observations) {
-      trial.control = observations[0];
-      trial.candidate = observations[1];
-      exp._report(exp._clean(trial));
+      const trial = new Trial(exp, observations);
+      exp.emitTrial(trial);
       return trial.control.returned;
     });
 

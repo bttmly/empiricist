@@ -1,16 +1,21 @@
 {
-  env: {
-    node: true,
-    es6: true
+  "env": {
+    "node": true,
+    "es6": true
   },
-  rules: {
-    func-style: [2, "declaration"],
-    handle-callback-err: 2,
-    strict: [2, "global"],
-    curly: 0,
-    strict: [2, "never"],
-    no-use-before-define: 0,
-    no-underscore-dangle: 0,
-    space-after-function-name: [2, "always"],
+  "rules": {
+    "func-style": [2, "declaration"],
+    "handle-callback-err": 2,
+    "strict": [2, "global"],
+    "curly": 0,
+    "strict": [2, "never"],
+    "no-use-before-define": 0,
+    "no-underscore-dangle": 0,
+    "space-after-function-name": [2, "always"],
+    "no-undef": 0,
+  },
+  "globals": {
+    "it": 0,
+    "describe": 0
   }
 }

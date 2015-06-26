@@ -13,11 +13,7 @@ function makeId () {
 }
 
 function isThennable (p) {
-  return (
-    p &&
-    isFunction(p.then) &&
-    isFunction(p.catch)
-  );
+  return (p && isFunction(p.then) && isFunction(p.catch));
 }
 
 function assertHasMethods (obj, args) {

@@ -5,7 +5,8 @@ const async = require("async");
 const assign = require("object-assign");
 
 const {createOptions, createExperimentFactory} = require("./shared");
-const {makeId, isFunction} = require("./pkg-util");
+const {isFunction} = require("./pkg-util");
+const Trial = require("./trial");
 
 function wrapAsyncExperiment (exp) {
 
@@ -13,7 +14,6 @@ function wrapAsyncExperiment (exp) {
 
     const finish = args.pop();
     const ctx = exp.context || this;
-    const trial = {name: exp.name, id: makeId()};
 
     assert(isFunction(finish), "Last argument must be a callback function");
 
@@ -25,15 +25,14 @@ function wrapAsyncExperiment (exp) {
     const {controlOptions, candidateOptions} = createOptions(exp, args, ctx);
 
     async.map([controlOptions, candidateOptions], makeAsyncObservation, function (_, observations) {
-      trial.control = observations[0];
-      trial.candidate = observations[1];
-      exp.report(exp.clean(trial));
-      if (!exp.match(trial)) exp.emit("mismatch", trial);
+      const trial = new Trial(exp, observations);
+      exp.emitTrial(trial);
       finish(...trial.control.cbArgs);
     });
   }
 
   assign(experimentFunc, exp.control);
+
   return experimentFunc;
 }
 
@@ -47,15 +46,9 @@ function makeAsyncObservation (options, cb) {
     if (d) d.exit();
     observation.duration = Date.now() - start;
 
-    if (cbArgs[0] != null) {
-      observation.error = cbArgs[0];
-    }
-
-    if (cbArgs.length > 2) {
-      observation.result = cbArgs.slice(1);
-    } else if (cbArgs[1] != null) {
-      observation.result = cbArgs[1];
-    }
+    const [result, error] = cbArgs;
+    if (error != null) observation.error = error;
+    if (result != null) observation.result = result;
 
     observation.cbArgs = cbArgs;
     cb(null, observation);

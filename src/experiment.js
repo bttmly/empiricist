@@ -7,7 +7,7 @@ function isMaybeFunction (maybeFn) {
   return maybeFn == null || isFunction(maybeFn);
 }
 
-class Experiment extends EventEmitter {
+module.exports = class xExperiment extends EventEmitter {
 
   static assertValid (e) {
     assert(isFunction(e.clean));
@@ -38,7 +38,7 @@ class Experiment extends EventEmitter {
   }
 
   enabled () {
-    return this.hasOwnProperty("candidate") && isFunction(this.candidate);
+    return isFunction(this.candidate);
   }
 
   report () {}
@@ -66,6 +66,9 @@ class Experiment extends EventEmitter {
     return this;
   }
 
-}
+  emitTrial (trial) {
+    this.emit((this.match(trial) ? "match" : "mismatch"), trial);
+    this.emit("trial", trial);
+  }
 
-module.exports = Experiment;
+};

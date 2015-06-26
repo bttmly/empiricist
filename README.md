@@ -261,3 +261,38 @@ To do:
 - [ ] Better rescuing / stuff to avoid thrown errors from configured functions
 - [ ] Function renaming? How close is close enough to the control?
 - [ ] Promise experiment factory
+
+
+
+## What is this for?
+This is a library for testing multiple code approaches to a problem against each other, intended for production Node.js settings. The least interesting use of this would be to compare the execution times of two synchronous functions, and verify that their outputs are the same. 
+
+Here's something more interesting: you want to start caching some piece of data in, say, Redis. But caching is notoriously tricky. How can you verify that the product with the caching layer in place behaves like the code that always interacted with the database? Well, obviously, test it. Unit tests are all well and good, but in complex systems it can be difficult to correctly test the kind of corner cases you'll invariably encounter in production.
+
+What can you do? Well, at some point in your application there is going to be a function that needs to go from calling into the database to calling into Redis. What if you had it do **both**, but only send back the result of the original code (in this case, the database query result). You could then save the results of each operation and compare them against each other, looking for inconsistencies. For example, did you miss a necessary cache invalidation condition? (I've only talked about the *read* side of the system here, you would also need to implement the *write* side of the caching layer as well, otherwise, obviously, it won't work.)
+
+Empiricist is a library for running these kinds of "experiments". It provides a few experiment wrappers for common types of asychronous operations (callback-based, promise-based). It also provides some helper code and a base class that can provide a foundation layer for more complex experiments, or those using, say [generator functions]().
+
+
+```js
+function getUser (id, cb) {
+  db.users.findOne({_id: id}, cb);
+}
+
+
+function getUserMaybeCached (id, cb) {
+  Redis.hgetall("user" + id, function (err, data) {
+    if (err) return cb(err);
+    if (data) return cb(null, data);
+    getUser(id, function (err, user) {
+      if (err) return cb(err);
+      Redis.hmset("user" + id, user, function (err) {
+        return cb(null, user);
+      });
+    });
+  });
+}
+
+
+
+```
