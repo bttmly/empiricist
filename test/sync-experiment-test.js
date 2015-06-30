@@ -1,7 +1,9 @@
 require("babel/register");
 
 let _ = require("lodash");
-let expect = require("chai").expect;
+// let expect = require("chai").expect;
+
+let expect = require("must");
 let sinon = require("sinon");
 
 let syncExperiment = require("../lib/sync-experiment");
@@ -98,7 +100,7 @@ describe("syncExperiment 'constructor'", function () {
       let ctx = {};
       let arg = {};
 
-      let fn = syncExperiment("test", function (e) {
+     syncExperiment("test", function (e) {
         e.use(noop);
         ctx = this;
         arg = e;
@@ -132,8 +134,7 @@ describe("instance methods", function () {
 
     it("sets the experiment's control behavior", function () {
       let fn = syncExperiment("test", (e) => {
-        e.use(yes)
-        exp = e;
+        exp = e.use(yes);
       });
       expect(exp.control).to.equal(yes);
       expect(fn()).to.equal(yes());
@@ -141,7 +142,9 @@ describe("instance methods", function () {
 
     it("an experiment whose control behavior throws an error will throw that error", function () {
       let fn = syncExperiment("test", function (e) {
-        e.use(() => { throw new Error("Kaboom!") })
+        e.use(function () {
+          throw new Error("Kaboom!");
+        });
       });
       expect(fn).to.throw(/kaboom/i);
     });
@@ -155,12 +158,10 @@ describe("instance methods", function () {
     let ySpy, nSpy, exp, fn;
 
     beforeEach(() => {
-      ySpy  = sinon.spy(yes)
-      nSpy = sinon.spy(no)
+      ySpy = sinon.spy(yes);
+      nSpy = sinon.spy(no);
       fn = syncExperiment("test", (e) => {
-        e.use(ySpy)
-        e.try(nSpy)
-        exp = e;
+        exp = e.use(ySpy).try(nSpy);
       });
     });
 
@@ -210,11 +211,10 @@ describe("instance methods", function () {
       let obj2 = {};
 
       let fn = syncExperiment("test", (e) => {
-        e.use(function () { ctx = this; });
-        e.setContext(obj1);
+        e.use(function () { ctx = this; }).setContext(obj1);
       });
 
-      fn.call(obj2)
+      fn.call(obj2);
       expect(ctx).to.equal(obj1);
 
     });
@@ -227,7 +227,7 @@ describe("instance methods", function () {
         e.use(function () { ctx = this; });
       });
 
-      fn.call(obj)
+      fn.call(obj);
       expect(ctx).to.equal(obj);
 
     });
@@ -240,13 +240,15 @@ describe("instance methods", function () {
       let trial;
 
       syncExperiment("test", function (e) {
+        e.use(add).try(noop);
         e.setMetadata({a: 1});
         e.setMetadata({a: 2, b: 3});
-        e.use(noop);
         e.on("trial", (t) => trial = t);
       })();
 
-      expect(trial.metadata.a).to.equal(2);
+      expect(trial).to.exist();
+      expect(trial.candidate.metadata.a).to.equal(2);
+      expect(trial.control.metadata.a).to.equal(2);
     });
   });
 
@@ -256,9 +258,9 @@ describe("instance methods", function () {
       let enabler = sinon.spy(no);
 
       let fn = syncExperiment("test", (ex) => {
-        ex.use(add).try(candidate)
+        ex.use(add).try(candidate);
         ex.enabled = enabler;
-      })
+      });
 
       fn(2, 3);
 
@@ -272,81 +274,58 @@ describe("instance methods", function () {
       let enabler = sinon.spy(yes);
 
       let fn = syncExperiment("test", (ex) => {
-        ex.use(add).try(candidate)
+        ex.use(add).try(candidate);
         ex.enabled = enabler;
-      })
+      });
 
       fn(2, 3);
 
-      expect(enabler.args[0]).to.deep.equal([2, 3]);
+      expect(enabler.args[0]).to.eql([2, 3]);
     });
   });
 
 
 
   describe("#beforeRun", function () {
-    let id, exp, fn;
+    let sid, exp, fn;
 
     beforeEach(() => {
-      id = sinon.spy(x => x);
+      sid = sinon.spy(id);
       fn = syncExperiment("test", (e) => {
-        e.use(x => x)
-        e.beforeRun = id;
+        e.use(id);
+        e.beforeRun = sid;
         exp = e;
       });
     });
 
 
     it("runs only if the candidate is going to run (no candidate)", function () {
-      // we have no candidate
       fn([1, 2, 3]);
-      expect(id.callCount).to.equal(0);
+      expect(sid.callCount).to.equal(0);
     });
 
     it("runs only if the candidate is going to run (candidate disabled)", function () {
-      let id = sinon.spy(x => x);
       let candidate = sinon.spy(noop);
-
-      let fn = syncExperiment("test", (ex) => {
-        ex.use(x => x)
-          .try(candidate)
-
-        ex.beforeRun = id;
-        ex.enabled = no;
-      });
+      exp.enabled = no;
+      exp.try(candidate);
 
       fn([1, 2, 3]);
       expect(candidate.callCount).to.equal(0);
-      expect(id.callCount).to.equal(0);
+      expect(sid.callCount).to.equal(0);
     });
 
     it("receives the arguments as an array", function () {
-      let id = sinon.spy(x => x);
-      let candidate = sinon.spy(noop);
       let o = {};
-
-      let fn = syncExperiment("test", (ex) => {
-        ex.use(x => x)
-          .try(noop)
-
-        ex.beforeRun = id;
-      });
+      exp.try(noop);
 
       fn(o);
-      expect(Array.isArray(id.args[0][0])).to.equal(true);
-      expect(id.args[0][0][0]).to.equal(o);
+      expect(Array.isArray(sid.args[0][0])).to.equal(true);
+      expect(sid.args[0][0][0]).to.equal(o);
     });
 
     it("defaults to returning the arguments array", function () {
-      let candidate = sinon.spy(noop);
-      let o = {};
-      let trial;
-
-      let fn = syncExperiment("test", (ex) => {
-        ex.use(x => x).try(noop)
-        ex.on("trial", t => trial = t);
-      });
-
+      let trial, o = {};
+      exp.try(noop).on("trial", t => trial = t);
       fn(o);
 
       expect(trial.control.args[0]).to.equal(o);
@@ -363,27 +342,20 @@ describe("instance methods", function () {
       let candidate = sinon.spy(id);
       let control = sinon.spy(id);
 
-      let fn = syncExperiment("test", (ex) => {
-        ex.use(control).try(candidate)
-
+      fn = syncExperiment("test", (ex) => {
+        ex.use(control).try(candidate);
         ex.beforeRun = before;
       });
 
       fn(o);
-
       expect(before.returnValues[0][0]).to.equal(candidate.args[0][0]);
-
       expect(control.args[0][0]).to.equal(o);
-      expect(candidate.args[0][0]).to.not.equal(o)
+      expect(candidate.args[0][0]).to.not.equal(o);
     });
 
     it("if the beforeRun function doesn't return an array, an exception is thrown", function () {
-
-      let fn = syncExperiment("test", (ex) => {
-        ex.use(noop).try(noop)
-        ex.beforeRun = noop;
-      });
-
+      exp.beforeRun = noop;
+      exp.try(noop);
       expect(fn).to.throw(/must return an array/i);
     });
 

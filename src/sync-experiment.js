@@ -6,17 +6,19 @@ const Trial = require("./trial");
 function wrapSyncExperiment (exp) {
 
   function experimentFunc (...args) {
-
     const ctx = exp.contextWasSet ? exp.context : this;
 
     if (!exp.enabled(...args)) {
+      exp.emit("skipped", args);
       return exp.control.apply(ctx, args);
     }
 
     const {controlOptions, candidateOptions} = createOptions(exp, args, ctx);
-    const observations = [makeSyncObservation(controlOptions), makeSyncObservation(candidateOptions)];
+    const observations = [controlOptions, candidateOptions].map(makeSyncObservation);
     const trial = new Trial(exp, observations);
+
     exp.emitTrial(trial);
+
     return trial.control.result;
   }
 

@@ -8,11 +8,9 @@ function isMaybeFunction (maybeFn) {
   return maybeFn == null || isFunction(maybeFn);
 }
 
-module.exports = class xExperiment extends EventEmitter {
+module.exports = class Experiment extends EventEmitter {
 
   static assertValid (e) {
-    assert(isFunction(e.clean));
-    assert(isFunction(e.report));
     assert(isFunction(e.control));
     assert(isFunction(e.enabled));
     assert(isFunction(e.beforeRun));
@@ -39,24 +37,6 @@ module.exports = class xExperiment extends EventEmitter {
     return this;
   }
 
-  enabled () {
-    return isFunction(this.candidate);
-  }
-
-  report () {}
-
-  clean (observation) {
-    return observation;
-  }
-
-  match ({control, candidate}) {
-    return control.returned === candidate.returned;
-  }
-
-  beforeRun (args) {
-    return args;
-  }
-
   setMetadata (metadata) {
     assert(isObject(metadata), "`setMetadata` requires an object argument");
     this.metadata = assign(this.metadata, metadata);
@@ -72,6 +52,19 @@ module.exports = class xExperiment extends EventEmitter {
   emitTrial (trial) {
     this.emit((this.match(trial) ? "match" : "mismatch"), trial);
     this.emit("trial", trial);
+    return this;
+  }
+
+  enabled () {
+    return isFunction(this.candidate);
+  }
+
+  match ({control, candidate}) {
+    return control.returned === candidate.returned;
+  }
+
+  beforeRun (args) {
+    return args;
   }
 
 };

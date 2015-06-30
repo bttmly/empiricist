@@ -17,13 +17,9 @@ function createExperimentFactory (wrapper, Ctor) {
 
     assert(isString(name), `'name' argument must be a string, found ${name}`);
     assert(isFunction(executor), `'executor' argument must be a function, found ${executor}`);
-
     const experiment = new Ctor(name);
-
     executor.call(experiment, experiment);
-
     Ctor.assertValid(experiment);
-
     return wrapper(experiment);
   };
 

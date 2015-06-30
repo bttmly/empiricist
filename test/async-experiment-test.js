@@ -18,20 +18,19 @@ describe("asyncExperiment 'factory'", function () {
     function throwInCallback (cb) {
       setTimeout(function () {
         throw new Error("Thrown in callback");
-        cb();
-      }, 5)
-    };
+      }, 5);
+    }
 
     function callbackWithError (cb) {
       setTimeout(function () {
         cb(new Error("Callback with error"));
       }, 5);
-    };
+    }
 
     function callbackWithObj (cb) {
       setTimeout(function () {
         cb(null, obj);
-      })
+      });
     }
 
     it("it handles thrown errors in candidate callbacks", function (done) {
@@ -49,8 +48,8 @@ describe("asyncExperiment 'factory'", function () {
         expect(err).to.not.exist;
         expect(result).to.equal(obj);
 
-        // delete trial.candidate.error.domain;
-        // delete trial.candidate.error.domainThrown;
+        delete trial.candidate.error.domain;
+        delete trial.candidate.error.domainThrown;
 
         expect(omitNonDeterministic(trial)).to.deep.equal({
           name: "test",
@@ -77,7 +76,7 @@ describe("asyncExperiment 'factory'", function () {
       let trial, exp;
 
       let fn = asyncExperiment("test", function (ex) {
-        ex.use(callbackWithObj).try(callbackWithError)
+        ex.use(callbackWithObj).try(callbackWithError);
         ex.on("trial", (t) => trial = t);
         exp = ex;
       });
@@ -99,7 +98,7 @@ describe("asyncExperiment 'factory'", function () {
             args: [],
             metadata: {},
             error: new Error("Callback with error"),
-            cbArgs: [new Error("Callback with error")],
+            cbArgs: [new Error("Callback with error")]
           }
         });
 
