@@ -1,5 +1,6 @@
 const assert = require("assert");
 const {EventEmitter} = require("events");
+const assign = require("object-assign");
 
 const {isFunction, isObject} = require("./pkg-util");
 
@@ -21,8 +22,9 @@ module.exports = class xExperiment extends EventEmitter {
   constructor (name) {
     super();
     this.name = name;
-    this._metadata = {};
-    this._context = null;
+    this.metadata = {};
+    this.context = null;
+    this.contextWasSet = false;
   }
 
   use (fn) {
@@ -57,12 +59,13 @@ module.exports = class xExperiment extends EventEmitter {
 
   setMetadata (metadata) {
     assert(isObject(metadata), "`setMetadata` requires an object argument");
-    this._metadata = metadata;
+    this.metadata = assign(this.metadata, metadata);
     return this;
   }
 
   setContext (context) {
-    this._context = context;
+    this.context = context;
+    this.contextWasSet = true;
     return this;
   }
 

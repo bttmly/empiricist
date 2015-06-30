@@ -36,7 +36,7 @@ function createOptions (exp, args, ctx) {
 
   const options = {
     ctx: ctx,
-    metadata: exp._metadata
+    metadata: exp.metadata
   };
 
   const controlOptions = assign({

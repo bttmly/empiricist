@@ -8,6 +8,10 @@ function isString (s) {
   return typeof s === "string";
 }
 
+function isObject (o) {
+  return Object(o) === o;
+}
+
 function makeId () {
   return Date.now() + "-" + Math.random().toString(16).slice(2);
 }
@@ -32,5 +36,6 @@ module.exports = {
   isThennable,
   isGenerator,
   isFunction,
-  isString
+  isString,
+  isObject
 };

@@ -13,6 +13,8 @@ describe("asyncExperiment 'factory'", function () {
 
   describe("error handling", function () {
 
+    const obj = {key: "value"};
+
     function throwInCallback (cb) {
       setTimeout(function () {
         throw new Error("Thrown in callback");
@@ -26,9 +28,9 @@ describe("asyncExperiment 'factory'", function () {
       }, 5);
     };
 
-    function callbackWithTrue (cb) {
+    function callbackWithObj (cb) {
       setTimeout(function () {
-        cb(null, true);
+        cb(null, obj);
       })
     }
 
@@ -37,32 +39,32 @@ describe("asyncExperiment 'factory'", function () {
       let trial, exp;
 
       let fn = asyncExperiment("test", function (ex) {
-        ex.use(callbackWithTrue).try(throwInCallback);
-        ex.report = (x) => trial = x
+        ex.use(callbackWithObj).try(throwInCallback);
+        ex.on("trial", (t) => trial = t);
         exp = ex;
       });
 
       fn(function (err, result) {
 
         expect(err).to.not.exist;
-        expect(result).to.equal(true);
+        expect(result).to.equal(obj);
 
-        expect(trial.candidate.error).to.exist;
-        expect(trial.candidate.error.message).to.equal("Thrown in callback");
-        delete trial.candidate.error;
+        // delete trial.candidate.error.domain;
+        // delete trial.candidate.error.domainThrown;
 
         expect(omitNonDeterministic(trial)).to.deep.equal({
           name: "test",
           control: {
             args: [],
             metadata: {},
-            cbArgs: [ null, true ],
-            result: true
+            cbArgs: [null, obj],
+            result: obj
           },
           candidate: {
             args: [],
             metadata: {},
             cbArgs: [],
+            error: new Error("Thrown in callback")
           }
         });
 
@@ -75,29 +77,29 @@ describe("asyncExperiment 'factory'", function () {
       let trial, exp;
 
       let fn = asyncExperiment("test", function (ex) {
-        ex.use(callbackWithTrue).try(callbackWithError)
-        ex.report = (x) => trial = x
+        ex.use(callbackWithObj).try(callbackWithError)
+        ex.on("trial", (t) => trial = t);
         exp = ex;
       });
 
       fn(function (err, result) {
 
         expect(err).to.not.exist;
-        expect(result).to.equal(true);
+        expect(result).to.equal(obj);
 
         expect(omitNonDeterministic(trial)).to.deep.equal({
           name: "test",
           control: {
             args: [],
             metadata: {},
-            cbArgs: [ null, true ],
-            result: true
+            cbArgs: [null, obj],
+            result: obj
           },
           candidate: {
             args: [],
             metadata: {},
             error: new Error("Callback with error"),
-            cbArgs: [ new Error("Callback with error") ],
+            cbArgs: [new Error("Callback with error")],
           }
         });
 

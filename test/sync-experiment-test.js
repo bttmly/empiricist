@@ -197,7 +197,7 @@ describe("instance methods", function () {
       let obj = {};
       let fn = syncExperiment("test", (e) => {
         e.use(function () { ctx = this; });
-        e.context = obj;
+        e.setContext(obj);
       });
 
       fn();
@@ -211,7 +211,7 @@ describe("instance methods", function () {
 
       let fn = syncExperiment("test", (e) => {
         e.use(function () { ctx = this; });
-        e.context = obj1;
+        e.setContext(obj1);
       });
 
       fn.call(obj2)
@@ -234,111 +234,21 @@ describe("instance methods", function () {
 
   });
 
-  xdescribe("#metadata", function () {
+  describe("#metadata", function () {
 
     it("merges the argument into the experiment's metadata", function () {
-      let m;
+      let trial;
+
       syncExperiment("test", function (e) {
-        m = e._metadata;
-        e.metadata({a: 1});
+        e.setMetadata({a: 1});
+        e.setMetadata({a: 2, b: 3});
         e.use(noop);
-      });
+        e.on("trial", (t) => trial = t);
+      })();
 
-      expect(m.a).to.equal(1);
+      expect(trial.metadata.a).to.equal(2);
     });
   });
-
-
-  xdescribe("#report", function () {
-    let trials = [];
-
-    let spy = sinon.spy((x) => trials.push(x))
-
-    it("sets the experiment's trial reporter", function () {
-
-      let fn = syncExperiment("test", (ex) => {
-        ex.use(add).try(multiply);
-        ex.report = spy;
-      });
-
-      fn(2, 3);
-
-      expect(spy.calledOnce).to.equal(true);
-      expect(trials.length).to.equal(1);
-
-      expect(omitNonDeterministic(trials[0])).to.deep.equal({
-        name: "test",
-        control: {
-          type: "control",
-          args: [ 2, 3 ],
-          metadata: {},
-          result: 5,
-        },
-        candidate: {
-          type: "candidate",
-          args: [ 2, 3 ],
-          metadata: {},
-          result: 6,
-        }
-      });
-    });
-  });
-
-
-
-
-  xdescribe("#clean", function () {
-    it("is applied to a trial object before it gets to the reporter", function () {
-      let trials = [];
-      let reporter = sinon.spy((arg) => trials.push(arg));
-
-      let cleaner = sinon.spy(function (result) {
-        return {
-          name: result.name,
-          control: result.control.result,
-          candidate: result.candidate.result
-        };
-      });
-
-      let fn = syncExperiment("test", (ex) => {
-        ex.use(add).try(multiply)
-        ex.report = reporter;
-        ex.clean = cleaner;
-      });
-
-      fn(2, 3);
-
-      expect(reporter.callCount).to.equal(1);
-      expect(cleaner.callCount).to.equal(1);
-      expect(trials.length).to.equal(1);
-
-      expect(omitNonDeterministic(cleaner.args[0][0])).to.deep.equal({
-        name: "test",
-        control: {
-          type: "control",
-          args: [ 2, 3 ],
-          metadata: {},
-          result: 5,
-        },
-        candidate: {
-          type: "candidate",
-          args: [ 2, 3 ],
-          metadata: {},
-          result: 6,
-        }
-      });
-
-      expect(reporter.args[0][0]).to.deep.equal({
-        name: "test",
-        control: 5,
-        candidate: 6
-      });
-
-    });
-  });
-
-
-
 
   describe("#enabled", function () {
     it("is run to see if the candidate should be executed", function () {

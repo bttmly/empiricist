@@ -13,7 +13,7 @@ function wrapAsyncExperiment (exp) {
   function experimentFunc (...args) {
 
     const finish = args.pop();
-    const ctx = exp.context || this;
+    const ctx = exp.contextWasSet ? exp.context : this;
 
     assert(isFunction(finish), "Last argument must be a callback function");
 
@@ -44,27 +44,30 @@ function makeAsyncObservation (options, cb) {
 
   function next (...cbArgs) {
     if (d) d.exit();
+
     observation.duration = Date.now() - start;
+    const [error, result] = observation.cbArgs = cbArgs;
 
-    const [result, error] = cbArgs;
-    if (error != null) observation.error = error;
-    if (result != null) observation.result = result;
+    if (error) observation.error = error;
+    if (result) observation.result = result;
 
-    observation.cbArgs = cbArgs;
     cb(null, observation);
+  }
+
+  function go () {
+    fn.apply(ctx, args.concat(next));
   }
 
   if (which === "candidate") {
     d = domain.create();
-    d.enter();
     d.on("error", function (e) {
       observation.error = e;
       next();
     });
+    return d.run(go);
   }
 
-  fn.apply(ctx, args.concat(next));
-
+  go();
 }
 
 module.exports = createExperimentFactory(wrapAsyncExperiment);

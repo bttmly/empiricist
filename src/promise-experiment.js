@@ -4,7 +4,8 @@ const {createOptions, createExperimentFactory} = require("./shared");
 const Trial = require("./trial");
 
 function wrapPromiseExperiment (exp) {
-  const ctx = exp._context || this;
+
+  const ctx = exp.contextWasSet ? exp.context : this;
 
   function experimentFunc (...args) {
 
@@ -19,7 +20,9 @@ function wrapPromiseExperiment (exp) {
     return Promise.all(promises).then(function (observations) {
       const trial = new Trial(exp, observations);
       exp.emitTrial(trial);
-      return trial.control.returned;
+      return trial.control.error ?
+        Promise.reject(trial.control.error) :
+        Promise.resolve(trial.control.result);
     });
 
   }
@@ -36,7 +39,7 @@ function makePromiseObservation (options) {
   const start = Date.now();
 
   function onSuccess (d) {
-    observation.returned = d;
+    observation.result = d;
     observation.duration = Date.now() - start;
     return Promise.resolve(observation);
   }
