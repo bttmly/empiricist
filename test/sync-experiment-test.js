@@ -57,43 +57,6 @@ describe("syncExperiment 'constructor'", function () {
 
   });
 
-  xit("it supports wrapping constructors", function () {
-
-    class Coffee {
-      constructor () {
-        this.hot = true;
-        this.caffeine = 5;
-      }
-    }
-
-    class Tea {
-      constructor () {
-        this.hot = true;
-        this.caffeine = 1;
-      }
-    }
-
-    var BeverageExperiment = syncExperiment("coffee", function (e) {
-      e.use(Coffee).try(Tea);
-    });
-
-    var bev = new BeverageExperiment();
-
-    expect(bev.hot).to.equal(true);
-    expect(bev.caffeine).to.equal(5);
-    expect(bev instanceof Coffee).to.equal(true);
-
-    // You should avoid ever exposing both the underlying control function and the
-    // experiment function. However, in the case with `new`, the returned object
-    // is actually constructed by the control function, and so the control function
-    // can be accessed through instance.constructor or reflection (Object.getPrototypeOf)
-    //
-    // We use a wonky trick to ensure that objects returned by new ExperimentalFn()
-    // show up as instanceof ExperimentalFn
-
-    expect(bev instanceof BeverageExperiment).to.equal(true);
-  });
-
   describe("executor function invocation", function () {
 
     it("executor's `this` context and executor's argument are the same object", function () {
@@ -127,7 +90,7 @@ describe("syncExperiment 'constructor'", function () {
 
 
 
-describe("instance methods", function () {
+describe("invocation of Experiment instance methods", function () {
 
   describe("#use", function () {
     let exp;
@@ -178,7 +141,7 @@ describe("instance methods", function () {
 
     it("an experiment whose candidate behavior throws an error will not throw", function () {
 
-      let fn = syncExperiment("test", (e) => {
+      fn = syncExperiment("test", (e) => {
         e.use(yes);
         e.try(() => { throw new Error("Kaboom!"); });
         exp = e;
@@ -186,6 +149,7 @@ describe("instance methods", function () {
 
       expect(fn()).to.equal(true);
     });
+
   });
 
 
@@ -230,6 +194,18 @@ describe("instance methods", function () {
       fn.call(obj);
       expect(ctx).to.equal(obj);
 
+    });
+
+    it("works properly for null", function () {
+      let ctx;
+      let obj = {};
+
+      let fn = syncExperiment("test", (e) => {
+        e.use(function () { ctx = this; }).setContext(null);
+      });
+
+      fn.call(obj);
+      expect(ctx).to.equal(null);
     });
 
   });
@@ -357,6 +333,34 @@ describe("instance methods", function () {
       exp.beforeRun = noop;
       exp.try(noop);
       expect(fn).to.throw(/must return an array/i);
+    });
+
+  });
+
+  describe("events", function () {
+
+    describe("skipped", function () {
+      xit("is emitted when an experiment is skipped (candidate is not run)", function () {
+
+      });
+    });
+
+    describe("trial", function () {
+      xit("is emitted whenever an experiment runs", function () {
+
+      });
+    });
+
+    describe("match", function () {
+      xit("is emitted whenever a trial satisfies the experiment's match method", function () {
+
+      });
+    });
+
+    describe("mismatch", function () {
+      xit("is emitted whenever a trial does not satisfy the experiment's match method", function () {
+
+      });
     });
 
   });

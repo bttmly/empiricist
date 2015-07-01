@@ -1,7 +1,7 @@
 require("babel/register");
 
 let _ = require("lodash");
-let expect = require("chai").expect;
+let expect = require("must");
 let sinon = require("sinon");
 
 let asyncExperiment = require("../lib/async-experiment");
@@ -45,13 +45,13 @@ describe("asyncExperiment 'factory'", function () {
 
       fn(function (err, result) {
 
-        expect(err).to.not.exist;
+        expect(err).to.not.exist();
         expect(result).to.equal(obj);
 
         delete trial.candidate.error.domain;
         delete trial.candidate.error.domainThrown;
 
-        expect(omitNonDeterministic(trial)).to.deep.equal({
+        expect(omitNonDeterministic(trial)).to.eql({
           name: "test",
           control: {
             args: [],
@@ -83,10 +83,10 @@ describe("asyncExperiment 'factory'", function () {
 
       fn(function (err, result) {
 
-        expect(err).to.not.exist;
+        expect(err).to.not.exist();
         expect(result).to.equal(obj);
 
-        expect(omitNonDeterministic(trial)).to.deep.equal({
+        expect(omitNonDeterministic(trial)).to.eql({
           name: "test",
           control: {
             args: [],
