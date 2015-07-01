@@ -20,6 +20,7 @@ function createExperimentFactory (wrapper, Ctor) {
     const experiment = new Ctor(name);
     executor.call(experiment, experiment);
     Ctor.assertValid(experiment);
+
     return wrapper(experiment);
   };
 

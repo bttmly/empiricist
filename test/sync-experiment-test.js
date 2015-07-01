@@ -10,7 +10,10 @@ let syncExperiment = require("../lib/sync-experiment");
 let Experiment = require("../lib/experiment");
 
 
-let {omitNonDeterministic} = require("./helpers");
+let {
+  omitNonDeterministic,
+  spyEvent
+} = require("./helpers");
 
 function noop () {}
 function id (x) { return x; }
@@ -339,9 +342,27 @@ describe("invocation of Experiment instance methods", function () {
 
   describe("events", function () {
 
-    describe("skipped", function () {
-      xit("is emitted when an experiment is skipped (candidate is not run)", function () {
+    describe("skip", function () {
+      it("is emitted when an experiment is skip (candidate is not run)", function () {
+        let stub;
 
+        syncExperiment("test", (e) => {
+          stub = sinon.stub();
+          e.use(noop).on("skip", stub);
+        })();
+
+        expect(stub.callCount).to.equal(1);
+      });
+
+      it("not emitted when an experiemnt runs", function () {
+        let stub;
+
+        syncExperiment("test", (e) => {
+          stub = sinon.stub();
+          e.use(noop).try(noop).on("skip", stub);
+        })();
+
+        expect(stub.callCount).to.equal(0);
       });
     });
 

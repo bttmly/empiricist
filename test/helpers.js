@@ -1,4 +1,5 @@
 let _ = require("lodash");
+let sinon = require("sinon");
 
 module.exports = {
   omitNonDeterministic (obj) {
@@ -6,5 +7,11 @@ module.exports = {
     ret.control = _.omit(ret.control, "duration");
     ret.candidate = _.omit(ret.candidate, "duration");
     return ret;
+  },
+
+  spyEvent (emitter, event) {
+    let listener = sinon.stub();
+    emitter.on(event, listener);
+    return listener;
   }
 };

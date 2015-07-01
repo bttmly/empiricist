@@ -5,9 +5,10 @@ const Trial = require("./trial");
 
 function wrapPromiseExperiment (exp) {
 
-  const ctx = exp.contextWasSet ? exp.context : this;
 
   function experimentFunc (...args) {
+
+    const ctx = exp.contextWasSet ? exp.context : this;
 
     if (!exp.enabled(args)) {
       return exp.control.apply(ctx, args);

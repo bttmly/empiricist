@@ -9,7 +9,7 @@ function wrapSyncExperiment (exp) {
     const ctx = exp.contextWasSet ? exp.context : this;
 
     if (!exp.enabled(...args)) {
-      exp.emit("skipped", args);
+      exp.emit("skip", args);
       return exp.control.apply(ctx, args);
     }
 
