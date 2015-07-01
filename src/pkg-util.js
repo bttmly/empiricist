@@ -21,9 +21,7 @@ function isThennable (p) {
 }
 
 function assertHasMethods (obj, args) {
-  args.forEach((m) => {
-    assert(isFunction(obj[m]));
-  });
+  args.forEach((m) => assert(isFunction(obj[m])));
 }
 
 function isGenerator (f) {
@@ -37,5 +35,5 @@ module.exports = {
   isGenerator,
   isFunction,
   isString,
-  isObject
+  isObject,
 };

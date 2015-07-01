@@ -1,35 +1,13 @@
-const assign = require("object-assign");
+const wrapObserver = require("./wrap-observer");
 
-const {createParams, createExperimentFactory} = require("./shared");
-const Trial = require("./trial");
-
-function wrapPromiseExperiment (exp) {
-
-
-  function experimentFunc (...args) {
-
-    const ctx = exp.contextWasSet ? exp.context : this;
-
-    if (!exp.enabled(args)) {
-      return exp.control.apply(ctx, args);
-    }
-
-    const {controlParams, candidateParams} = createParams(exp, args, ctx);
-    const promises = [controlParams, candidateParams].map(makePromiseObservation);
-
-    return Promise.all(promises).then(function (observations) {
-      const trial = new Trial(exp, observations);
-      exp.emitTrial(trial);
-      return trial.control.error ?
-        Promise.reject(trial.control.error) :
-        Promise.resolve(trial.control.result);
-    });
-
-  }
-
-  assign(experimentFunc, exp.control);
-  return experimentFunc;
-
+function observePromiseExperiment (exp, params) {
+  const promises = [params.control, params.candidate].map(makePromiseObservation);
+  return Promise.all(promises).then(function (observations) {
+    exp.emitTrial(...observations);
+    return trial.control.error ?
+      Promise.reject(trial.control.error) :
+      Promise.resolve(trial.control.result);
+  });
 }
 
 function makePromiseObservation (options) {
@@ -53,4 +31,5 @@ function makePromiseObservation (options) {
   return fn.apply(ctx, args).then(onSuccess, onError);
 }
 
-module.exports = createExperimentFactory(wrapPromiseExperiment);
+module.exports = wrapObserver(observePromiseExperiment);
+module.exports.observer = observePromiseExperiment;

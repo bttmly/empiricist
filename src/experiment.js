@@ -1,8 +1,9 @@
 const assert = require("assert");
 const {EventEmitter} = require("events");
+
 const assign = require("object-assign");
 
-const {isFunction, isObject} = require("./pkg-util");
+const {isFunction, isObject, makeId} = require("./pkg-util");
 
 function isMaybeFunction (maybeFn) {
   return maybeFn == null || isFunction(maybeFn);
@@ -39,7 +40,7 @@ module.exports = class Experiment extends EventEmitter {
 
   setMetadata (metadata) {
     assert(isObject(metadata), "`setMetadata` requires an object argument");
-    this.metadata = assign(this.metadata, metadata);
+    assign(this.metadata, metadata);
     return this;
   }
 
@@ -49,9 +50,10 @@ module.exports = class Experiment extends EventEmitter {
     return this;
   }
 
-  emitTrial (trial) {
-    this.emit((this.match(trial) ? "match" : "mismatch"), trial);
-    this.emit("trial", trial);
+  emitTrial (control, candidate) {
+    const o = {name: this.name, id: makeId(), control, candidate};
+    this.emit((this.match(control, candidate) ? "match" : "mismatch"), o);
+    this.emit("trial", o);
     return this;
   }
 
@@ -59,7 +61,7 @@ module.exports = class Experiment extends EventEmitter {
     return isFunction(this.candidate);
   }
 
-  match ({control, candidate}) {
+  match (control, candidate) {
     return control.returned === candidate.returned;
   }
 

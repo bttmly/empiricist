@@ -1,32 +1,10 @@
 const assert = require("assert");
-
 const assign = require("object-assign");
 
 const {isFunction, isString} = require("./pkg-util");
 const BaseExperiment = require("./experiment");
 
-
-
-function createExperimentFactory (wrapper, Ctor) {
-
-  Ctor = Ctor || BaseExperiment;
-
-  assertClassImplementsExperiment(Ctor);
-
-  return function experimentFactory (name, executor) {
-
-    assert(isString(name), `'name' argument must be a string, found ${name}`);
-    assert(isFunction(executor), `'executor' argument must be a function, found ${executor}`);
-    const experiment = new Ctor(name);
-    executor.call(experiment, experiment);
-    Ctor.assertValid(experiment);
-
-    return wrapper(experiment);
-  };
-
-}
-
-function experimentFactoryFactory (trialProducer, Experiment) {
+module.exports = function wrapObserver (observe, Experiment) {
 
   Experiment = Experiment || BaseExperiment;
 
@@ -49,61 +27,61 @@ function experimentFactoryFactory (trialProducer, Experiment) {
         return exp.control.apply(ctx, args);
       }
 
-      return trialProducer(createParams(exp, args, ctx), exp);
+      return observe(exp, createParams(exp, args, ctx));
     }
 
     return assign(experimentInstance, exp.control);
   };
 
-}
+};
 
 
 
 function createParams (exp, args, ctx) {
 
-  const options = {
+  const baseParams = {
     ctx: ctx,
-    metadata: exp.metadata
+    metadata: exp.metadata,
   };
 
-  const controlParams = assign({
+  const control = assign({
     fn: exp.control,
     which: "control",
-    args: args
-  }, options);
+    args: args,
+  }, baseParams);
 
   const candidateArgs = exp.beforeRun(args);
 
   assert(Array.isArray(candidateArgs), "beforeRun function must return an array.");
 
-  const candidateParams = assign({
+  const candidate = assign({
     fn: exp.candidate,
     which: "candidate",
-    args: candidateArgs
-  }, options);
+    args: candidateArgs,
+  }, baseParams);
 
-  return {controlParams, candidateParams};
+  return {control, candidate};
 
 }
 
 
 
 
-function safeMethodCall (experiment, method, ...args) {
-  if (typeof experiment[method] !== "function") {
-    throw new Error(`Tried to call invalid method ${method}`);
-  }
+// function safeMethodCall (experiment, method, ...args) {
+//   if (typeof experiment[method] !== "function") {
+//     throw new Error(`Tried to call invalid method ${method}`);
+//   }
 
-  let result;
+//   let result;
 
-  try {
-    result = experiment[method](...args);
-  } catch (e) {
-    experiment.emit(`${method}Error`, e, args);
-  }
+//   try {
+//     result = experiment[method](...args);
+//   } catch (e) {
+//     experiment.emit(`${method}Error`, e, args);
+//   }
 
-  return result;
-}
+//   return result;
+// }
 
 
 
@@ -114,10 +92,3 @@ function assertClassImplementsExperiment (MaybeExperiment) {
     assert(isFunction(MaybeExperiment.prototype[m]));
   });
 }
-
-module.exports = {
-  createParams,
-  createExperimentFactory,
-  safeMethodCall,
-  experimentFactoryFactory
-};
