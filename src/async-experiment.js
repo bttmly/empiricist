@@ -4,7 +4,7 @@ const domain = require("domain");
 const async = require("async");
 const assign = require("object-assign");
 
-const {createOptions, createExperimentFactory} = require("./shared");
+const {createParams, createExperimentFactory} = require("./shared");
 const {isFunction} = require("./pkg-util");
 const Trial = require("./trial");
 
@@ -22,9 +22,9 @@ function wrapAsyncExperiment (exp) {
       return;
     }
 
-    const {controlOptions, candidateOptions} = createOptions(exp, args, ctx);
+    const {controlParams, candidateParams} = createParams(exp, args, ctx);
 
-    async.map([controlOptions, candidateOptions], makeAsyncObservation, function (_, observations) {
+    async.map([controlParams, candidateParams], makeAsyncObservation, function (_, observations) {
       const trial = new Trial(exp, observations);
       exp.emitTrial(trial);
       finish(...trial.control.cbArgs);

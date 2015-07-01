@@ -1,33 +1,25 @@
-const assign = require("object-assign");
+// const assign = require("object-assign");
 
-const {createOptions, createExperimentFactory} = require("./shared");
+const {
+  // createOptions,
+  // createExperimentFactory,
+  experimentFactoryFactory
+} = require("./shared");
+
 const Trial = require("./trial");
 
-function wrapSyncExperiment (exp) {
 
-  function experimentFunc (...args) {
-    const ctx = exp.contextWasSet ? exp.context : this;
-
-    if (!exp.enabled(...args)) {
-      exp.emit("skip", args);
-      return exp.control.apply(ctx, args);
-    }
-
-    const {controlOptions, candidateOptions} = createOptions(exp, args, ctx);
-    const observations = [controlOptions, candidateOptions].map(makeSyncObservation);
-    const trial = new Trial(exp, observations);
-
-    exp.emitTrial(trial);
-
-    return trial.control.result;
-  }
-
-  assign(experimentFunc, exp.control);
-  return experimentFunc;
+// responsible for transforming observation parameters and an experiment into a trial
+// should invoke
+function createSyncTrial ({controlParams, candidateParams}, exp) {
+  const observations = [controlParams, candidateParams].map(makeSyncObservation);
+  exp.emitTrial(new Trial(exp, observations));
+  return observations[0].result;
 }
 
-function makeSyncObservation (options) {
-  const {fn, ctx, args, metadata, which} = options;
+// responsible for transforming one set of parameters into an observation
+function makeSyncObservation (params) {
+  const {fn, ctx, args, metadata, which} = params;
   const observation = {args, metadata, type: which};
   const start = Date.now();
 
@@ -47,4 +39,4 @@ function makeSyncObservation (options) {
 }
 
 
-module.exports = createExperimentFactory(wrapSyncExperiment);
+module.exports = experimentFactoryFactory(createSyncTrial);

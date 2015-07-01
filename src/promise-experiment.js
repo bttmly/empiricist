@@ -1,6 +1,6 @@
 const assign = require("object-assign");
 
-const {createOptions, createExperimentFactory} = require("./shared");
+const {createParams, createExperimentFactory} = require("./shared");
 const Trial = require("./trial");
 
 function wrapPromiseExperiment (exp) {
@@ -14,8 +14,8 @@ function wrapPromiseExperiment (exp) {
       return exp.control.apply(ctx, args);
     }
 
-    const {controlOptions, candidateOptions} = createOptions(exp, args, ctx);
-    const promises = [controlOptions, candidateOptions].map(makePromiseObservation);
+    const {controlParams, candidateParams} = createParams(exp, args, ctx);
+    const promises = [controlParams, candidateParams].map(makePromiseObservation);
 
     // I dont think this currently handles errors in the control properly
     return Promise.all(promises).then(function (observations) {

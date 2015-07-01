@@ -3,13 +3,13 @@ const assert = require("assert");
 const assign = require("object-assign");
 
 const {isFunction, isString} = require("./pkg-util");
-const Experiment = require("./experiment");
+const BaseExperiment = require("./experiment");
 
 
 
 function createExperimentFactory (wrapper, Ctor) {
 
-  Ctor = Ctor || Experiment;
+  Ctor = Ctor || BaseExperiment;
 
   assertClassImplementsExperiment(Ctor);
 
@@ -26,17 +26,47 @@ function createExperimentFactory (wrapper, Ctor) {
 
 }
 
+function experimentFactoryFactory (trialProducer, Experiment) {
+
+  Experiment = Experiment || BaseExperiment;
+
+  assertClassImplementsExperiment(Experiment);
+
+  return function experimentFactory (name, executor) {
+
+    assert(isString(name), `'name' argument must be a string, found ${name}`);
+    assert(isFunction(executor), `'executor' argument must be a function, found ${executor}`);
+
+    const exp = new Experiment(name);
+    executor.call(exp, exp);
+    Experiment.assertValid(exp);
+
+    function experimentInstance (...args) {
+      const ctx = exp.contextWasSet ? exp.context : this;
+
+      if (!exp.enabled(...args)) {
+        exp.emit("skip", args);
+        return exp.control.apply(ctx, args);
+      }
+
+      return trialProducer(createParams(exp, args, ctx), exp);
+    }
+
+    return assign(experimentInstance, exp.control);
+  };
+
+}
 
 
 
-function createOptions (exp, args, ctx) {
+function createParams (exp, args, ctx) {
 
   const options = {
     ctx: ctx,
     metadata: exp.metadata
   };
 
-  const controlOptions = assign({
+  const controlParams = assign({
     fn: exp.control,
     which: "control",
     args: args
@@ -46,13 +76,13 @@ function createOptions (exp, args, ctx) {
 
   assert(Array.isArray(candidateArgs), "beforeRun function must return an array.");
 
-  const candidateOptions = assign({
+  const candidateParams = assign({
     fn: exp.candidate,
     which: "candidate",
     args: candidateArgs
   }, options);
 
-  return {controlOptions, candidateOptions};
+  return {controlParams, candidateParams};
 
 }
 
@@ -80,13 +110,14 @@ function safeMethodCall (experiment, method, ...args) {
 
 function assertClassImplementsExperiment (MaybeExperiment) {
   assert(isFunction(MaybeExperiment));
-  Object.getOwnPropertyNames(Experiment.prototype).forEach((m) => {
+  Object.getOwnPropertyNames(BaseExperiment.prototype).forEach((m) => {
     assert(isFunction(MaybeExperiment.prototype[m]));
   });
 }
 
 module.exports = {
-  createOptions,
+  createParams,
   createExperimentFactory,
-  safeMethodCall
+  safeMethodCall,
+  experimentFactoryFactory
 };
