@@ -17,7 +17,6 @@ function wrapPromiseExperiment (exp) {
     const {controlParams, candidateParams} = createParams(exp, args, ctx);
     const promises = [controlParams, candidateParams].map(makePromiseObservation);
 
-    // I dont think this currently handles errors in the control properly
     return Promise.all(promises).then(function (observations) {
       const trial = new Trial(exp, observations);
       exp.emitTrial(trial);

@@ -13,6 +13,7 @@
     "no-underscore-dangle": 0,
     "space-after-function-name": [2, "always"],
     "no-undef": 0,
+    "comma-dangle": [2, "always-multiline"]
   },
   "globals": {
     "it": 0,
