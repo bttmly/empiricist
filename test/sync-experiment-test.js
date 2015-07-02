@@ -12,26 +12,26 @@ let Experiment = require("../lib/experiment");
 
 let {
   omitNonDeterministic,
-  spyEvent
+  spyEvent,
 } = require("./helpers");
 
-function noop () {}
-function id (x) { return x; }
-function no () { return false; }
-function yes () { return true; }
-function add (a, b) { return a + b; }
-function multiply (a, b) { return a * b; }
+let noop = () => {};
+let id = x => x;
+let no = () => false;
+let yes = () => true;
+let add = (a, b) => a + b;
+let multiply = (a, b) => a * b;
 
 // minimum amount of work required to initialize an experiment
 function executor (e) { e.use(noop); }
 
-describe("syncExperiment 'constructor'", function () {
+describe("syncExperiment 'constructor'", () => {
 
-  it("takes a `name` string as it's required first argument", function () {
+  it("takes a `name` string as it's required first argument", () => {
     expect(() => syncExperiment()).to.throw(/argument must be a string/i);
   });
 
-  it("takes an `executor` function as it's required second argument", function () {
+  it("takes an `executor` function as it's required second argument", () => {
     expect(() => syncExperiment("")).to.throw(/argument must be a function/i);
     expect(() => syncExperiment("", "")).to.throw(/argument must be a function/i);
   });
@@ -40,7 +40,7 @@ describe("syncExperiment 'constructor'", function () {
     expect(typeof syncExperiment("", executor)).to.equal("function");
   });
 
-  it("copies own enumerable properties from the control to the experiment", function () {
+  xit("copies own enumerable properties from the control to the experiment", () => {
 
     function f () {}
 
@@ -48,10 +48,10 @@ describe("syncExperiment 'constructor'", function () {
 
     Object.defineProperties(f, {
       "a": {enumerable: true, value: a},
-      "b": {value: b}
+      "b": {value: b},
     });
 
-    var exp = syncExperiment("test", function (e) {
+    var exp = syncExperiment("test", e => {
       e.use(f);
     });
 
@@ -60,9 +60,9 @@ describe("syncExperiment 'constructor'", function () {
 
   });
 
-  describe("executor function invocation", function () {
+  describe("executor function invocation", () => {
 
-    it("executor's `this` context and executor's argument are the same object", function () {
+    it("executor's `this` context and executor's argument are the same object", () => {
       let ctx = {};
       let arg = {};
 
@@ -75,10 +75,10 @@ describe("syncExperiment 'constructor'", function () {
       expect(arg).to.equal(ctx);
     });
 
-    it("the argument/context is an instance of Experiment", function () {
+    it("the argument/context is an instance of Experiment", () => {
       let exp;
 
-      syncExperiment("test", function (e) {
+      syncExperiment("test", e => {
         e.use(noop);
         exp = e;
       });
@@ -93,12 +93,12 @@ describe("syncExperiment 'constructor'", function () {
 
 
 
-describe("invocation of Experiment instance methods", function () {
+describe("invocation of Experiment instance methods", () => {
 
-  describe("#use", function () {
+  describe("#use", () => {
     let exp;
 
-    it("sets the experiment's control behavior", function () {
+    it("sets the experiment's control behavior", () => {
       let fn = syncExperiment("test", (e) => {
         exp = e.use(yes);
       });
@@ -106,8 +106,8 @@ describe("invocation of Experiment instance methods", function () {
       expect(fn()).to.equal(yes());
     });
 
-    it("an experiment whose control behavior throws an error will throw that error", function () {
-      let fn = syncExperiment("test", function (e) {
+    it("an experiment whose control behavior throws an error will throw that error", () => {
+      let fn = syncExperiment("test", e => {
         e.use(function () {
           throw new Error("Kaboom!");
         });
@@ -119,7 +119,7 @@ describe("invocation of Experiment instance methods", function () {
 
 
 
-  describe("#try", function () {
+  describe("#try", () => {
 
     let ySpy, nSpy, exp, fn;
 
@@ -131,20 +131,20 @@ describe("invocation of Experiment instance methods", function () {
       });
     });
 
-    it("sets the experiment's control behavior", function () {
+    it("sets the experiment's control behavior", () => {
       expect(exp.candidate).to.equal(nSpy);
       expect(fn()).to.equal(ySpy());
     });
 
-    it("it is invoked when the experiment is called", function () {
+    it("it is invoked when the experiment is called", () => {
       fn();
       expect(ySpy.callCount).to.equal(1);
       expect(nSpy.callCount).to.equal(1);
     });
 
-    it("an experiment whose candidate behavior throws an error will not throw", function () {
+    it("an experiment whose candidate behavior throws an error will not throw", () => {
 
-      fn = syncExperiment("test", (e) => {
+      fn = syncExperiment("test", e => {
         e.use(yes);
         e.try(() => { throw new Error("Kaboom!"); });
         exp = e;
@@ -155,70 +155,12 @@ describe("invocation of Experiment instance methods", function () {
 
   });
 
+  describe("#metadata", () => {
 
-
-
-  describe("#context", function () {
-
-    it("sets the experiment's `this` context", function () {
-      let ctx;
-      let obj = {};
-      let fn = syncExperiment("test", (e) => {
-        e.use(function () { ctx = this; });
-        e.setContext(obj);
-      });
-
-      fn();
-      expect(ctx).to.equal(obj);
-    });
-
-    it("overrides calling context if set", function () {
-      let ctx;
-      let obj1 = {};
-      let obj2 = {};
-
-      let fn = syncExperiment("test", (e) => {
-        e.use(function () { ctx = this; }).setContext(obj1);
-      });
-
-      fn.call(obj2);
-      expect(ctx).to.equal(obj1);
-
-    });
-
-    it("defers to the calling context if unset", function () {
-      let ctx;
-      let obj = {};
-
-      let fn = syncExperiment("test", (e) => {
-        e.use(function () { ctx = this; });
-      });
-
-      fn.call(obj);
-      expect(ctx).to.equal(obj);
-
-    });
-
-    it("works properly for null", function () {
-      let ctx;
-      let obj = {};
-
-      let fn = syncExperiment("test", (e) => {
-        e.use(function () { ctx = this; }).setContext(null);
-      });
-
-      fn.call(obj);
-      expect(ctx).to.equal(null);
-    });
-
-  });
-
-  describe("#metadata", function () {
-
-    it("merges the argument into the experiment's metadata", function () {
+    it("merges the argument into the experiment's metadata", () => {
       let trial;
 
-      syncExperiment("test", function (e) {
+      syncExperiment("test", e => {
         e.use(add).try(noop);
         e.setMetadata({a: 1});
         e.setMetadata({a: 2, b: 3});
@@ -231,14 +173,14 @@ describe("invocation of Experiment instance methods", function () {
     });
   });
 
-  describe("#enabled", function () {
-    it("is run to see if the candidate should be executed", function () {
+  describe("#enabled", () => {
+    it("is run to see if the candidate should be executed", () => {
       let candidate = sinon.spy(multiply);
       let enabler = sinon.spy(no);
 
-      let fn = syncExperiment("test", (ex) => {
-        ex.use(add).try(candidate);
-        ex.enabled = enabler;
+      let fn = syncExperiment("test", e => {
+        e.use(add).try(candidate);
+        e.enabled = enabler;
       });
 
       fn(2, 3);
@@ -248,13 +190,13 @@ describe("invocation of Experiment instance methods", function () {
 
     });
 
-    it("is passed the calling arguments", function () {
+    it("is passed the calling arguments", () => {
       let candidate = sinon.spy(multiply);
       let enabler = sinon.spy(yes);
 
-      let fn = syncExperiment("test", (ex) => {
-        ex.use(add).try(candidate);
-        ex.enabled = enabler;
+      let fn = syncExperiment("test", e => {
+        e.use(add).try(candidate);
+        e.enabled = enabler;
       });
 
       fn(2, 3);
@@ -265,12 +207,12 @@ describe("invocation of Experiment instance methods", function () {
 
 
 
-  describe("#beforeRun", function () {
+  describe("#beforeRun", () => {
     let sid, exp, fn;
 
     beforeEach(() => {
       sid = sinon.spy(id);
-      fn = syncExperiment("test", (e) => {
+      fn = syncExperiment("test", e => {
         e.use(id);
         e.beforeRun = sid;
         exp = e;
@@ -278,12 +220,12 @@ describe("invocation of Experiment instance methods", function () {
     });
 
 
-    it("runs only if the candidate is going to run (no candidate)", function () {
+    it("runs only if the candidate is going to run (no candidate)", () => {
       fn([1, 2, 3]);
       expect(sid.callCount).to.equal(0);
     });
 
-    it("runs only if the candidate is going to run (candidate disabled)", function () {
+    it("runs only if the candidate is going to run (candidate disabled)", () => {
       let candidate = sinon.spy(noop);
       exp.enabled = no;
       exp.try(candidate);
@@ -293,7 +235,7 @@ describe("invocation of Experiment instance methods", function () {
       expect(sid.callCount).to.equal(0);
     });
 
-    it("receives the arguments as an array", function () {
+    it("receives the arguments as an array", () => {
       let o = {};
       exp.try(noop);
 
@@ -302,7 +244,7 @@ describe("invocation of Experiment instance methods", function () {
       expect(sid.args[0][0][0]).to.equal(o);
     });
 
-    it("defaults to returning the arguments array", function () {
+    it("defaults to returning the arguments array", () => {
       let trial, o = {};
       exp.try(noop).on("trial", t => trial = t);
       fn(o);
@@ -311,17 +253,17 @@ describe("invocation of Experiment instance methods", function () {
       expect(trial.candidate.args[0]).to.equal(o);
     });
 
-    it("the candidate is called with the result of beforeRun", function () {
+    it("the candidate is called with the result of beforeRun", () => {
       let o = {};
 
-      before = sinon.spy((args) => {
+      before = sinon.spy(args => {
         return args.map(_.clone);
       });
 
       let candidate = sinon.spy(id);
       let control = sinon.spy(id);
 
-      fn = syncExperiment("test", (ex) => {
+      fn = syncExperiment("test", ex => {
         ex.use(control).try(candidate);
         ex.beforeRun = before;
       });
@@ -332,7 +274,7 @@ describe("invocation of Experiment instance methods", function () {
       expect(candidate.args[0][0]).to.not.equal(o);
     });
 
-    it("if the beforeRun function doesn't return an array, an exception is thrown", function () {
+    it("if the beforeRun function doesn't return an array, an exception is thrown", () => {
       exp.beforeRun = noop;
       exp.try(noop);
       expect(fn).to.throw(/must return an array/i);
@@ -340,13 +282,13 @@ describe("invocation of Experiment instance methods", function () {
 
   });
 
-  describe("events", function () {
+  describe("events", () => {
 
-    describe("skip", function () {
-      it("is emitted when an experiment is skip (candidate is not run)", function () {
+    describe("skip", () => {
+      it("is emitted when an experiment is skip (candidate is not run)", () => {
         let stub;
 
-        syncExperiment("test", (e) => {
+        syncExperiment("test", e => {
           stub = sinon.stub();
           e.use(noop).on("skip", stub);
         })();
@@ -354,10 +296,10 @@ describe("invocation of Experiment instance methods", function () {
         expect(stub.callCount).to.equal(1);
       });
 
-      it("not emitted when an experiemnt runs", function () {
+      it("not emitted when an experiemnt runs", () => {
         let stub;
 
-        syncExperiment("test", (e) => {
+        syncExperiment("test", e => {
           stub = sinon.stub();
           e.use(noop).try(noop).on("skip", stub);
         })();
@@ -366,20 +308,20 @@ describe("invocation of Experiment instance methods", function () {
       });
     });
 
-    describe("trial", function () {
-      xit("is emitted whenever an experiment runs", function () {
+    describe("trial", () => {
+      xit("is emitted whenever an experiment runs", () => {
 
       });
     });
 
-    describe("match", function () {
-      xit("is emitted whenever a trial satisfies the experiment's match method", function () {
+    describe("match", () => {
+      xit("is emitted whenever a trial satisfies the experiment's match method", () => {
 
       });
     });
 
-    describe("mismatch", function () {
-      xit("is emitted whenever a trial does not satisfy the experiment's match method", function () {
+    describe("mismatch", () => {
+      xit("is emitted whenever a trial does not satisfy the experiment's match method", () => {
 
       });
     });

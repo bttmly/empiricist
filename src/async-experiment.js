@@ -24,6 +24,8 @@ function makeAsyncObservation (options, cb) {
   const {fn, ctx, args, metadata, which} = options;
   const start = Date.now();
   const observation = {args, metadata};
+  const execute = fn.bind(ctx, ...args.concat(next));
+
   let d;
 
   function next (...cbArgs) {
@@ -37,8 +39,6 @@ function makeAsyncObservation (options, cb) {
 
     cb(null, observation);
   }
-
-  const execute = fn.bind(ctx, ...args.concat(next));
 
   if (which === "candidate") {
     d = domain.create();

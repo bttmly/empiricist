@@ -22,8 +22,6 @@ module.exports = class Experiment extends EventEmitter {
     super();
     this.name = name;
     this.metadata = {};
-    this.context = null;
-    this.contextWasSet = false;
   }
 
   use (fn) {
@@ -41,12 +39,6 @@ module.exports = class Experiment extends EventEmitter {
   setMetadata (metadata) {
     assert(isObject(metadata), "`setMetadata` requires an object argument");
     assign(this.metadata, metadata);
-    return this;
-  }
-
-  setContext (context) {
-    this.context = context;
-    this.contextWasSet = true;
     return this;
   }
 

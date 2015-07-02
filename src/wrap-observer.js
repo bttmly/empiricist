@@ -4,7 +4,7 @@ const assign = require("object-assign");
 const {isFunction, isString} = require("./pkg-util");
 const BaseExperiment = require("./experiment");
 
-module.exports = function wrapObserver (observe, Experiment) {
+function wrapObserver (observe, Experiment) {
 
   Experiment = Experiment || BaseExperiment;
 
@@ -19,7 +19,7 @@ module.exports = function wrapObserver (observe, Experiment) {
     executor.call(exp, exp);
     Experiment.assertValid(exp);
 
-    function experimentInstance (...args) {
+    return function experimentInstance (...args) {
       const ctx = exp.contextWasSet ? exp.context : this;
 
       if (!exp.enabled(...args)) {
@@ -28,14 +28,13 @@ module.exports = function wrapObserver (observe, Experiment) {
       }
 
       return observe(exp, createParams(exp, args, ctx));
-    }
+    };
 
-    return assign(experimentInstance, exp.control);
+    // hmm...
+    // return assign(experimentInstance, exp.control);
   };
 
-};
-
-
+}
 
 function createParams (exp, args, ctx) {
 
@@ -64,9 +63,6 @@ function createParams (exp, args, ctx) {
 
 }
 
-
-
-
 // function safeMethodCall (experiment, method, ...args) {
 //   if (typeof experiment[method] !== "function") {
 //     throw new Error(`Tried to call invalid method ${method}`);
@@ -83,12 +79,11 @@ function createParams (exp, args, ctx) {
 //   return result;
 // }
 
-
-
-
 function assertClassImplementsExperiment (MaybeExperiment) {
   assert(isFunction(MaybeExperiment));
   Object.getOwnPropertyNames(BaseExperiment.prototype).forEach((m) => {
     assert(isFunction(MaybeExperiment.prototype[m]));
   });
 }
+
+module.exports = wrapObserver;
