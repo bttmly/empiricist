@@ -224,16 +224,15 @@ Say we're persisting auth sessions in MongoDB, but we want to move to Redis. Obv
 var asyncExperiment = require("empiricist").asyncExperiment;
 
 function redisAuthMiddleware (user, cb) {
-  redis.get(user.session, function (err, result) {
+  redis.get(user.id, function (err, result) {
     if (err) return cb(err);
     if (result == null) return cb(new Error("Unauthenticated."));
     cb();
   });
 }
 
-function mongoAuthMiddleware = function (user, cb) {
-  var oid = BSON.ObjectID.createFromHexString(user.id);
-  db.collection("sessions").findOne({_id: oid}, function (err, result) {
+function mongoAuthMiddleware (user, cb) {
+  db.collection("sessions").findOne({_id: user.id}, function (err, result) {
     if (err) return cb(err);
     if (result == null) return cb(new Error("Unauthenticated."));
     cb();
@@ -246,7 +245,10 @@ var checkPermissions = asyncExperiment("permissions", function (e) {
 });
 
 app.use("/", function (req, res, next) {
-  checkPermissions(req.user, next);
+  checkPermissions(req.user, function (err) {
+    if (err) return res.status(403).send("Forbidden");
+    next();
+  });
 });
 ```
 
@@ -274,25 +276,9 @@ What can you do? Well, at some point in your application there is going to be a 
 Empiricist is a library for running these kinds of "experiments". It provides a few experiment wrappers for common types of asychronous operations (callback-based, promise-based). It also provides some helper code and a base class that can provide a foundation layer for more complex experiments, or those using, say [generator functions]().
 
 
-```js
-function getUser (id, cb) {
-  db.users.findOne({_id: id}, cb);
-}
-
-
-function getUserMaybeCached (id, cb) {
-  Redis.hgetall("user" + id, function (err, data) {
-    if (err) return cb(err);
-    if (data) return cb(null, data);
-    getUser(id, function (err, user) {
-      if (err) return cb(err);
-      Redis.hmset("user" + id, user, function (err) {
-        return cb(null, user);
-      });
-    });
-  });
-}
 
 
 
-```
+
+
+## Design

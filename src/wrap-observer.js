@@ -6,8 +6,6 @@ const BaseExperiment = require("./experiment");
 
 function wrapObserver (observe, Experiment) {
 
-  Experiment = Experiment || BaseExperiment;
-
   assertClassImplementsExperiment(Experiment);
 
   return function experimentFactory (name, executor) {
@@ -15,8 +13,11 @@ function wrapObserver (observe, Experiment) {
     assert(isString(name), `'name' argument must be a string, found ${name}`);
     assert(isFunction(executor), `'executor' argument must be a function, found ${executor}`);
 
+    // create an experiment instance
     const exp = new Experiment(name);
+    // invoke the executor, exposing the experiment instance, to the caller
     executor.call(exp, exp);
+    // verify the caller has correctly initialized the experiment
     Experiment.assertValid(exp);
 
     return function experimentInstance (...args) {
@@ -30,8 +31,6 @@ function wrapObserver (observe, Experiment) {
       return observe(exp, createParams(exp, args, ctx));
     };
 
-    // hmm...
-    // return assign(experimentInstance, exp.control);
   };
 
 }

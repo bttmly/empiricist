@@ -7,8 +7,10 @@ require("babel/register");
 const expect = require("must");
 const sinon = require("sinon");
 
-const promiseExperiment = require("../src/promise-experiment");
-const Experiment = require("../src/experiment");
+const {
+  promiseExperiment,
+  Experiment,
+} = require("../lib");
 
 const NAME = "test";
 const DELAY = 5;
@@ -20,30 +22,10 @@ let id = (x) => x;
 
 let resolved = v => Promise.resolve(v);
 let rejected = v => Promise.reject(v);
-
-function willResolve (val) {
-  return function () {
-    return new Promise(resolve => {
-      setTimeout(() => resolve(val), DELAY);
-    });
-  };
-}
-
-function willReject (val) {
-  return function () {
-    return new Promise((__, reject) => {
-      setTimeout(() => reject(val), DELAY);
-    });
-  };
-}
-
-function willThrow (msg) {
-  return function () {
-    return new Promise(() => {
-      throw new Error(msg);
-    });
-  };
-}
+  
+let willResolve = val => () => new Promise(resolve => setTimeout(() => resolve(val), DELAY));
+let willReject = val => () => new Promise((__, reject) => setTimeout(() => reject(val), DELAY));
+let willThrow = msg => () => new Promise(() => { throw new Error(msg); });
 
 
 describe("Promise experiment 'constructor'", () => {

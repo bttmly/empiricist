@@ -1,6 +1,15 @@
+const wrapObserver = require("./wrap-observer");
+const Experiment = require("./experiment");
+const observeSync = require("./observe-sync");
+const observeAsync = require("./observe-async");
+const observePromise = require("./observe-promise");
+
 module.exports = {
-  Experiment: require("./experiment"),
-  syncExperiment: require("./sync-experiment"),
-  asyncExperiment: require("./async-experiment"),
-  promiseExperiment: require("./promise-experiment"),
+  Experiment,
+  observeSync,
+  observeAsync,
+  observePromise,
+  syncExperiment: wrapObserver(observeSync, Experiment),
+  asyncExperiment: wrapObserver(observeAsync, Experiment),
+  promiseExperiment: wrapObserver(observePromise, Experiment),
 };

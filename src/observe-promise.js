@@ -1,14 +1,9 @@
-"use strict";
 
-function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) arr2[i] = arr[i]; return arr2; } else { return Array.from(arr); } }
-
-var wrapObserver = require("./wrap-observer");
-
-function observePromiseExperiment(exp, params) {
-  var promises = [params.control, params.candidate].map(makePromiseObservation);
+function observePromise (exp, params) {
+  const promises = [params.control, params.candidate].map(makePromiseObservation);
   return Promise.all(promises).then(function (observations) {
     // console.log("trial then...");
-    exp.emitTrial.apply(exp, _toConsumableArray(observations));
+    exp.emitTrial(...observations);
     // console.log("after emit...");
 
     if (observations[0].error) {
@@ -19,6 +14,7 @@ function observePromiseExperiment(exp, params) {
     // console.log("resolving with control result", observations[0].result);
     return Promise.resolve(observations[0].result);
   })
+  
   // .catch(function (err) {
   //   console.log("UNEXPECTED ERROR!");
   //   console.log(err);
@@ -28,23 +24,20 @@ function observePromiseExperiment(exp, params) {
   ;
 }
 
-function makePromiseObservation(params) {
-  var fn = params.fn;
-  var ctx = params.ctx;
-  var args = params.args;
-  var metadata = params.metadata;
+function makePromiseObservation (params) {
 
-  var observation = { args: args, metadata: metadata };
-  var start = Date.now();
+  const {fn, ctx, args, metadata} = params;
+  const observation = {args, metadata};
+  const start = Date.now();
 
-  function onSuccess(d) {
+  function onSuccess (d) {
     // console.log("onSuccess", params.which);
     observation.result = d;
     observation.duration = Date.now() - start;
     return Promise.resolve(observation);
   }
 
-  function onError(e) {
+  function onError (e) {
     // console.log("onError", params.which);
     observation.error = e;
     observation.duration = Date.now() - start;
@@ -54,5 +47,4 @@ function makePromiseObservation(params) {
   return fn.apply(ctx, args).then(onSuccess, onError);
 }
 
-module.exports = wrapObserver(observePromiseExperiment);
-module.exports.observer = observePromiseExperiment;
+module.exports = observePromise;

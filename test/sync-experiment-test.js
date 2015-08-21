@@ -6,9 +6,10 @@ let _ = require("lodash");
 let expect = require("must");
 let sinon = require("sinon");
 
-let syncExperiment = require("../lib/sync-experiment");
-let Experiment = require("../lib/experiment");
-
+const {
+  syncExperiment,
+  Experiment,
+} = require("../lib");
 
 let {
   omitNonDeterministic,
@@ -21,9 +22,17 @@ let no = () => false;
 let yes = () => true;
 let add = (a, b) => a + b;
 let multiply = (a, b) => a * b;
+function self () { return this; }
 
 // minimum amount of work required to initialize an experiment
 function executor (e) { e.use(noop); }
+
+function make (f, g) {
+  return syncExperiment("test", e => {
+    e.use(f);
+    if (g) e.try(g);
+  });
+}
 
 describe("syncExperiment 'constructor'", () => {
 
@@ -113,6 +122,24 @@ describe("invocation of Experiment instance methods", () => {
         });
       });
       expect(fn).to.throw(/kaboom/i);
+    });
+
+    describe("dynamic `this` context", () => {
+      let obj;
+
+      beforeEach(() => {
+        obj = { method: make(self) };
+      });
+
+      it("passes the calling context correctly", () => {
+        expect(obj.method()).to.equal(obj);
+      });
+
+      it("works with explicit context setting", () => {
+        let thing = {};
+        expect(obj.method.call(thing)).to.equal(thing);
+      });
+
     });
   });
 

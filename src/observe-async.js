@@ -5,7 +5,7 @@ const async = require("async");
 const wrapObserver = require("./wrap-observer");
 const {isFunction} = require("./pkg-util");
 
-function observeAsyncExperiment (exp, params) {
+function observeAsync (exp, params) {
   const finish = popActualCallbacks(params);
   async.map([params.control, params.candidate], makeAsyncObservation, function (_, observations) {
     exp.emitTrial(...observations);
@@ -52,5 +52,5 @@ function makeAsyncObservation (options, cb) {
   execute();
 }
 
-module.exports = wrapObserver(observeAsyncExperiment);
-module.exports.observer = observeAsyncExperiment;
+module.exports = observeAsync;
+

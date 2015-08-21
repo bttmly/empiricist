@@ -1,6 +1,6 @@
 const wrapObserver = require("./wrap-observer");
 
-function observeSyncExperiment (exp, params) {
+function observeSync (exp, params) {
   const observations = [params.control, params.candidate].map(makeSyncObservation);
   exp.emitTrial(...observations);
   return observations[0].result;
@@ -27,5 +27,4 @@ function makeSyncObservation (params) {
 }
 
 
-module.exports = wrapObserver(observeSyncExperiment);
-module.exports.observer = observeSyncExperiment;
+module.exports = observeSync;
