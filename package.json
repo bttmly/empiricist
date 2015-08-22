@@ -7,7 +7,8 @@
     "test": "test"
   },
   "scripts": {
-    "test": "eslint ./src && npm run build && mocha --compilers js:babel/register ./test/*.js -R spec",
+    "test": "npm run lint && npm run build && mocha --compilers js:babel/register ./test/*.js -R spec",
+    "lint": "eslint ./src",
     "build": "rm -rf ./lib; babel src --out-dir lib",
     "prepublish": "npm run build",
     "examples": "babel-node ./example/async/async-example.js; babel-node ./example/basic/basic-example.js; babel-node ./example/express/index.js;"
@@ -15,8 +16,10 @@
   "author": "Nick Bottomley (github.com/nickb1080)",
   "license": "MIT",
   "devDependencies": {
+    "babel-eslint": "^4.0.10",
     "chai": "^2.2.0",
     "es6-promise": "^2.3.0",
+    "eslint": "^1.2.1",
     "lodash": "^3.7.0",
     "mocha": "^2.2.4",
     "sinon": "^1.14.1"
