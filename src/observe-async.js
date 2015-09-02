@@ -5,17 +5,17 @@ const async = require("async");
 const wrapObserver = require("./wrap-observer");
 const {isFunction} = require("./pkg-util");
 
-function observeAsync (exp, params) {
-  const finish = popActualCallbacks(params);
-  async.map([params.control, params.candidate], makeAsyncObservation, function (_, observations) {
+function observeAsync (exp, {control, candidate}) {
+  const finish = popActualCallbacks({control, candidate});
+  async.map([control, candidate], makeAsyncObservation, function (_, observations) {
     exp.emitTrial(...observations);
     finish(...observations[0].cbArgs);
   });
 }
 
-function popActualCallbacks (params) {
-  const cb = params.control.args.pop();
-  params.candidate.args.pop();
+function popActualCallbacks ({control, candidate}) {
+  const cb = control.args.pop();
+  candidate.args.pop();
   if (!isFunction(cb)) throw new TypeError("Callback must be a function");
   return cb;
 }
@@ -24,12 +24,17 @@ function makeAsyncObservation (options, cb) {
   const {fn, ctx, args, metadata, which} = options;
   const start = Date.now();
   const observation = {args, metadata};
-  const execute = fn.bind(ctx, ...args.concat(next));
+  let d = domain.create();
 
-  let d;
+  d.on("error", (e) => {
+    observation.error = e;
+    next();
+  });
 
+  d.run(fn.bind(ctx, ...args, next));
+  
   function next (...cbArgs) {
-    if (d) d.exit();
+    d.exit();
 
     observation.duration = Date.now() - start;
     const [error, result] = observation.cbArgs = cbArgs;
@@ -39,17 +44,6 @@ function makeAsyncObservation (options, cb) {
 
     cb(null, observation);
   }
-
-  if (which === "candidate") {
-    d = domain.create();
-    d.on("error", function (e) {
-      observation.error = e;
-      next();
-    });
-    return d.run(execute);
-  }
-
-  execute();
 }
 
 module.exports = observeAsync;
