@@ -4,73 +4,70 @@ let _ = require("lodash");
 let expect = require("must");
 let sinon = require("sinon");
 
-let {
-  asyncExperiment,
-  syncExperiment,
-} = require("../lib/");
+// let {
+//   asyncExperiment,
+//   syncExperiment,
+// } = require("../lib/");
 
+let wrapObserver = require("../lib/wrap-observer");
+let Experiment = require("../lib/experiment");
+let observeAsync = require("../lib/observe-async");
+// let observeAsync = require("../lib/observe-async-proposed");
+
+let asyncExperiment = wrapObserver(observeAsync, Experiment);
+
+// for async experiments, lets the domain exit before doing anything
 let {omitNonDeterministic} = require("./helpers");
 
 describe("asyncExperiment 'factory'", function () {
 
   describe("error handling", function () {
 
+    const DURATION = 5;
     const obj = {key: "value"};
-
-    function throwInCallback (cb) {
-      setTimeout(function () {
-        throw new Error("Thrown in callback");
-      }, 5);
-    }
-
-    function callbackWithError (cb) {
-      setTimeout(function () {
-        cb(new Error("Callback with error"));
-      }, 5);
-    }
-
-    function callbackWithObj (cb) {
-      setTimeout(function () {
-        cb(null, obj);
-      });
-    }
+    const throwInCallback = cb => setTimeout(() => { throw new Error("Thrown in callback")}, DURATION);
+    const callbackWithError = cb => setTimeout(() => cb(new Error("Callback with error")), DURATION);
+    const callbackWithObj = cb => setTimeout(() => cb(null, obj), DURATION);
 
     it("it handles thrown errors in candidate callbacks", function (done) {
 
       let trial, exp;
 
       let fn = asyncExperiment("test", function (ex) {
-        ex.use(callbackWithObj).try(throwInCallback);
-        ex.on("trial", (t) => trial = t);
-        exp = ex;
+        (exp = ex)
+          .use(callbackWithObj)
+          .try(throwInCallback)
+          .on("trial", (t) => trial = t);
       });
 
-      fn(function (err, result) {
-
+      function expectations (err, result) {
         expect(err).to.not.exist();
         expect(result).to.equal(obj);
 
         delete trial.candidate.error.domain;
         delete trial.candidate.error.domainThrown;
 
+        let e = new Error("Thrown in callback");
+
         expect(omitNonDeterministic(trial)).to.eql({
           name: "test",
+          metadata: {},
           control: {
             args: [],
-            metadata: {},
             cbArgs: [null, obj],
-            result: obj
+            result: obj,
           },
           candidate: {
             args: [],
-            metadata: {},
-            cbArgs: [],
-            error: new Error("Thrown in callback")
-          }
+            cbArgs: [e],
+            error: e,
+          },
         });
 
         done();
-      });
+      }
+
+      fn(expectations);
     });
 
     it("it handles candidate calling back with errors", function (done) {
@@ -83,29 +80,33 @@ describe("asyncExperiment 'factory'", function () {
         exp = ex;
       });
 
-      fn(function (err, result) {
-
+      function expectations (err, result) {
         expect(err).to.not.exist();
         expect(result).to.equal(obj);
 
+        let e = new Error("Callback with error");
+
         expect(omitNonDeterministic(trial)).to.eql({
           name: "test",
+          metadata: {},
           control: {
             args: [],
-            metadata: {},
             cbArgs: [null, obj],
-            result: obj
+            result: obj,
           },
           candidate: {
             args: [],
-            metadata: {},
-            error: new Error("Callback with error"),
-            cbArgs: [new Error("Callback with error")]
-          }
+            error: e,
+            cbArgs: [e],
+          },
         });
 
         done();
-      });
+      }
+
+      fn(expectations);
+
+      // fn(defer(expectations))
     });
 
   });

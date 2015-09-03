@@ -9,7 +9,7 @@
   "scripts": {
     "test": "npm run lint && npm run build && mocha --compilers js:babel/register ./test/*.js -R spec",
     "lint": "eslint ./src",
-    "build": "rm -rf ./lib; babel src --out-dir lib",
+    "build": "rm -rf ./lib; babel src --out-dir lib --stage 0",
     "prepublish": "npm run build",
     "examples": "babel-node ./example/async/async-example.js; babel-node ./example/basic/basic-example.js; babel-node ./example/express/index.js;"
   },
@@ -27,6 +27,7 @@
   "dependencies": {
     "async": "^0.9.0",
     "babel": "^5.6.14",
+    "babel-eslint": "^4.1.1",
     "must": "^0.12.0",
     "object-assign": "^2.0.0"
   }

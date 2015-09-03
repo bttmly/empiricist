@@ -28,12 +28,38 @@ function isGenerator (f) {
   return isFunction(f) && /^function\s*\*/.test(f.toString());
 }
 
+function isSafeProperty (prop) {
+  return (
+    prop !== "name" &&
+    prop !== "arguments" &&
+    prop !== "caller" 
+  );
+}
+
+function safeFuncProps (obj) {
+  return isFunction(obj) ? isSafeProperty : () => true;
+}
+
+function ownMethods (obj) {
+  return Object.getOwnPropertyNames(obj)
+    .filter(safeFuncProps(obj))
+    .filter(m => isFunction(obj[m]));
+}
+
+function defer (fn) {
+  return function (...args) {
+    setImmediate(() => fn(...args));
+  };
+}
+
 module.exports = {
   makeId,
+  ownMethods,
   assertHasMethods,
   isThennable,
   isGenerator,
   isFunction,
   isString,
   isObject,
+  defer,
 };

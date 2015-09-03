@@ -1,16 +1,17 @@
 const domain = require("domain");
-
 const async = require("async");
 
 const wrapObserver = require("./wrap-observer");
-const {isFunction} = require("./pkg-util");
+const {isFunction, defer} = require("./pkg-util");
+const {ERROR} = require("./strings");
 
 function observeAsync (exp, {control, candidate}) {
   const finish = popActualCallbacks({control, candidate});
-  async.map([control, candidate], makeAsyncObservation, function (_, observations) {
+
+  async.map([control, candidate], makeAsyncObservation, defer((_, observations) => {
     exp.emitTrial(...observations);
     finish(...observations[0].cbArgs);
-  });
+  }));
 }
 
 function popActualCallbacks ({control, candidate}) {
@@ -23,14 +24,10 @@ function popActualCallbacks ({control, candidate}) {
 function makeAsyncObservation (options, cb) {
   const {fn, ctx, args, metadata, which} = options;
   const start = Date.now();
-  const observation = {args, metadata};
-  let d = domain.create();
+  const observation = {args};
+  const d = domain.create();
 
-  d.on("error", (e) => {
-    observation.error = e;
-    next();
-  });
-
+  d.on(ERROR, next);
   d.run(fn.bind(ctx, ...args, next));
   
   function next (...cbArgs) {

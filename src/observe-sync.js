@@ -3,13 +3,15 @@ const wrapObserver = require("./wrap-observer");
 function observeSync (exp, {control, candidate}) {
   const [controlObs, candidateObs] = [control, candidate].map(makeSyncObservation);
   exp.emitTrial(controlObs, candidateObs);
-  if (controlObs.error) throw controlObs.error;
+  if (controlObs.error) {
+    throw controlObs.error;
+  }
   return controlObs.result;
 }
 
 function makeSyncObservation (params) {
-  const {fn, ctx, args, metadata, which} = params;
-  const observation = {args, metadata, type: which};
+  const {fn, ctx, args} = params;
+  const observation = {args};
   const start = Date.now();
 
   try {

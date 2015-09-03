@@ -195,8 +195,7 @@ describe("invocation of Experiment instance methods", () => {
       })();
 
       expect(trial).to.exist();
-      expect(trial.candidate.metadata.a).to.equal(2);
-      expect(trial.control.metadata.a).to.equal(2);
+      expect(trial.metadata.a).to.equal(2);
     });
   });
 

@@ -1,12 +1,14 @@
 const assert = require("assert");
 const assign = require("object-assign");
 
-const {isFunction, isString} = require("./pkg-util");
+const {isFunction, isString, ownMethods} = require("./pkg-util");
 const BaseExperiment = require("./experiment");
 
 function wrapObserver (observe, Experiment) {
 
-  assertClassImplementsExperiment(Experiment);
+  if (Experiment !== BaseExperiment) {
+    assertClassImplementsExperiment(Experiment);
+  }
 
   return function experimentFactory (name, executor) {
 
@@ -37,50 +39,37 @@ function wrapObserver (observe, Experiment) {
 
 function createParams (exp, args, ctx) {
 
-  const baseParams = {
-    ctx: ctx,
-    metadata: exp.metadata,
-  };
-
-  const control = assign({
-    fn: exp.control,
-    which: "control",
-    args: args,
-  }, baseParams);
-
   const candidateArgs = exp.beforeRun(args);
-
   assert(Array.isArray(candidateArgs), "beforeRun function must return an array.");
 
-  const candidate = assign({
-    fn: exp.candidate,
-    which: "candidate",
-    args: candidateArgs,
-  }, baseParams);
-
-  return {control, candidate};
+  return {
+    control: {
+      which: "control",
+      fn: exp.control,
+      args: args,
+      // metadata: exp.metadata,
+      ctx,
+    },
+    candidate: {
+      which: "candidate",
+      fn: exp.candidate,
+      args: candidateArgs,
+      // metadata: exp.metadata,
+      ctx,
+    },
+  };
 
 }
 
-// function safeMethodCall (experiment, method, ...args) {
-//   if (typeof experiment[method] !== "function") {
-//     throw new Error(`Tried to call invalid method ${method}`);
-//   }
-
-//   let result;
-
-//   try {
-//     result = experiment[method](...args);
-//   } catch (e) {
-//     experiment.emit(`${method}Error`, e, args);
-//   }
-
-//   return result;
-// }
 
 function assertClassImplementsExperiment (MaybeExperiment) {
   assert(isFunction(MaybeExperiment));
-  Object.getOwnPropertyNames(BaseExperiment.prototype).forEach((m) => {
+  
+  ownMethods(BaseExperiment).forEach(m => {
+    assert(isFunction(BaseExperiment[m]));
+  });
+
+  ownMethods(BaseExperiment.prototype).forEach(m => {
     assert(isFunction(MaybeExperiment.prototype[m]));
   });
 }

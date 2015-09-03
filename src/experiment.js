@@ -9,7 +9,7 @@ function isMaybeFunction (maybeFn) {
   return maybeFn == null || isFunction(maybeFn);
 }
 
-module.exports = class Experiment extends EventEmitter {
+class Experiment extends EventEmitter {
 
   static assertValid (e) {
     assert(isFunction(e.control));
@@ -43,9 +43,16 @@ module.exports = class Experiment extends EventEmitter {
   }
 
   emitTrial (control, candidate) {
-    const o = {name: this.name, id: makeId(), control, candidate};
-    this.emit((this.match(control, candidate) ? "match" : "mismatch"), o);
-    this.emit("trial", o);
+    const data = {
+      name: this.name, 
+      id: makeId(), 
+      metadata: this.metadata,
+      control, 
+      candidate,
+    };
+
+    this.emit((this.match(control, candidate) ? "match" : "mismatch"), data);
+    this.emit("trial", data);
     return this;
   }
 
@@ -61,4 +68,6 @@ module.exports = class Experiment extends EventEmitter {
     return args;
   }
 
-};
+}
+
+module.exports = Experiment;

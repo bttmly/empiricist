@@ -13,5 +13,5 @@ module.exports = {
     let listener = sinon.stub();
     emitter.on(event, listener);
     return listener;
-  }
+  },
 };
