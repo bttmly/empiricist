@@ -44,17 +44,13 @@ function createParams (exp, args, ctx) {
 
   return {
     control: {
-      which: "control",
       fn: exp.control,
       args: args,
-      // metadata: exp.metadata,
       ctx,
     },
     candidate: {
-      which: "candidate",
       fn: exp.candidate,
       args: candidateArgs,
-      // metadata: exp.metadata,
       ctx,
     },
   };
