@@ -1,8 +1,6 @@
 const assert = require("assert");
 const {EventEmitter} = require("events");
 
-const assign = require("object-assign");
-
 const {isFunction, isObject, makeId} = require("./pkg-util");
 
 function isMaybeFunction (maybeFn) {
@@ -38,7 +36,7 @@ class Experiment extends EventEmitter {
 
   setMetadata (metadata) {
     assert(isObject(metadata), "`setMetadata` requires an object argument");
-    assign(this.metadata, metadata);
+    this.metadata = {...this.metadata, ...metadata};
     return this;
   }
 

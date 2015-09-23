@@ -1,10 +1,11 @@
 const assert = require("assert");
-const assign = require("object-assign");
 
 const {isFunction, isString, ownMethods} = require("./pkg-util");
 const BaseExperiment = require("./experiment");
 
 function wrapObserver (observe, Experiment) {
+
+  assert(isFunction(observe), "First argument must be a function");
 
   if (Experiment !== BaseExperiment) {
     assertClassImplementsExperiment(Experiment);
@@ -59,14 +60,16 @@ function createParams (exp, args, ctx) {
 
 
 function assertClassImplementsExperiment (MaybeExperiment) {
-  assert(isFunction(MaybeExperiment));
+  let msg = `Class ${MaybeExperiment.name} must implement the Experiment interface`.
+
+  assert(isFunction(MaybeExperiment), msg);
   
   ownMethods(BaseExperiment).forEach(m => {
-    assert(isFunction(BaseExperiment[m]));
+    assert(isFunction(BaseExperiment[m]), msg);
   });
 
   ownMethods(BaseExperiment.prototype).forEach(m => {
-    assert(isFunction(MaybeExperiment.prototype[m]));
+    assert(isFunction(MaybeExperiment.prototype[m]), msg);
   });
 }
 
